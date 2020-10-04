@@ -24,6 +24,8 @@ public class drive_maybe extends LinearOpMode{
         telemetry.update();
 
 
+        waitForStart();
+        runtime.reset();
 
         while (opModeIsActive()) {
 
