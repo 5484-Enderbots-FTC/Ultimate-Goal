@@ -21,6 +21,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.graphics.ColorSpace;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -81,7 +83,7 @@ public class Goal_Color_Detection extends LinearOpMode
         while (opModeIsActive())
         {
             telemetry.addData("Analysis", pipeline.getAnalysis());
-            telemetry.addData("CSV Value", pipeline.getAverage());
+            telemetry.addData("Y Value", pipeline.getAverage());
             telemetry.update();
 
             // Don't burn CPU cycles busy-looping in this sample
@@ -141,9 +143,10 @@ public class Goal_Color_Detection extends LinearOpMode
         /*
          * Working variables
          */
-        Mat region1_Cb, region2_Cb, region3_Cb;
+        Mat region1_Y, region2_Cb, region3_Cb;
         Mat YCrCb = new Mat();
         Mat Cb = new Mat();
+        Mat Y = new Mat();
         int avg1, avg2, avg3;
 
         // Volatile since accessed by OpMode thread w/o synchronization
@@ -153,10 +156,11 @@ public class Goal_Color_Detection extends LinearOpMode
          * This function takes the RGB frame, converts to YCrCb,
          * and extracts the Cb channel to the 'Cb' variable
          */
-        void inputToCb(Mat input)
+        void inputToY(Mat input)
         {
             Imgproc.cvtColor(input, YCrCb, Imgproc.COLOR_RGB2YCrCb);
-            Core.extractChannel(YCrCb, Cb, 2);
+            Core.extractChannel(YCrCb, Y, 1);
+
         }
 
         @Override
@@ -171,14 +175,14 @@ public class Goal_Color_Detection extends LinearOpMode
              * buffer would be re-allocated the first time a real frame
              * was crunched)
              */
-            inputToCb(firstFrame);
+            inputToY(firstFrame);
 
             /*
              * Submats are a persistent reference to a region of the parent
              * buffer. Any changes to the child affect the parent, and the
              * reverse also holds true.
              */
-            region1_Cb = Cb.submat(new Rect(region1_pointA, region1_pointB));
+            region1_Y = Y.submat(new Rect(region1_pointA, region1_pointB));
         }
 
         @Override
@@ -222,7 +226,7 @@ public class Goal_Color_Detection extends LinearOpMode
             /*
              * Get the Cb channel of the input frame after conversion to YCrCb
              */
-            inputToCb(input);
+            inputToY(input);
 
             /*
              * Compute the average pixel value of each submat region. We're
@@ -231,7 +235,7 @@ public class Goal_Color_Detection extends LinearOpMode
              * pixel value of the 3-channel image, and referenced the value
              * at index 2 here.
              */
-            avg1 = (int) Core.mean(region1_Cb).val[0];
+            avg1 = (int) Core.mean(region1_Y).val[0];
 
             /*
              * Draw a rectangle showing sample region 1 on the screen.
@@ -263,7 +267,7 @@ public class Goal_Color_Detection extends LinearOpMode
              * Now that we found the max, we actually need to go and
              * figure out which sample region that value was from
              */
-            if(avg1 <=115 && avg1 >= 80) // Was it from region 1?
+            if(avg1 <=230 && avg1 >= 180) // Was it from region 1?
             {
                 position = RingLocation.THERE; // Record our analysis
 
