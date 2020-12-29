@@ -3,12 +3,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.TouchSensor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 
-@TeleOp(name="drive",group="Linear Opmode")
+@TeleOp(name="driveing test",group="Linear Opmode")
 
 public class drive_maybe extends LinearOpMode{
 
@@ -50,7 +47,9 @@ public class drive_maybe extends LinearOpMode{
             mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
             mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
 
-            
+            if (gamepad1.a){
+                mtrIntake.setPower(0.8);
+            }
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.update();
