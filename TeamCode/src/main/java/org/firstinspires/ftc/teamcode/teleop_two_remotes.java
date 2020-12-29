@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -12,7 +13,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 
 @TeleOp(name="teleop_two_remotes", group="Linear Opmode")
-//@Disabled
+@Disabled
 public class teleop_two_remotes extends LinearOpMode {
 
     ElapsedTime runtime = new ElapsedTime();

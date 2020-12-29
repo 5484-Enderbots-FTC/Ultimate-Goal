@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "Foundation Only", group = "Concept")
-//@Disabled
+@Disabled
 public class foundationOnly extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
