@@ -21,7 +21,7 @@ public class flywheel_test extends LinearOpMode{
 
     final double noSpeed = 0;
     double speedValue = 0;
-    final double speedIncrement = 0.001;
+    final double speedIncrement = 0.0001;
     //double load = 0;
 
     public void runOpMode() {
@@ -80,7 +80,12 @@ public class flywheel_test extends LinearOpMode{
     }
     private void setSpeed(double speed){
         mtrLeft.setPower(speed);
-        mtrRight.setPower(speed);
+        if(speedValue == 0){
+            mtrRight.setPower(speed);
+        }
+        else{
+            mtrRight.setPower(speed+(speed*.1));
+        }
     }
 
 
