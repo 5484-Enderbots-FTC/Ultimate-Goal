@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop just dt",group="Linear Opmode")
+@TeleOp(name="drive control swap",group="Linear Opmode")
 
-public class drive_maybe extends LinearOpMode{
+public class drive_controls_swapped extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
 
