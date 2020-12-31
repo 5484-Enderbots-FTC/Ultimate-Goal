@@ -42,10 +42,10 @@ public class drive_controls_swapped extends LinearOpMode{
 
         while (opModeIsActive()) {
 
-            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.right_stick_x + gamepad1.left_stick_x));
+            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.right_stick_x - gamepad1.left_stick_x));
+            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.right_stick_x - gamepad1.left_stick_x));
+            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.right_stick_x + gamepad1.left_stick_x));
 
             if (gamepad1.a){
                 mtrIntake.setPower(0.8);
