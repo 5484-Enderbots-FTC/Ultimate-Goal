@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="teleop just dt",group="Linear Opmode")
@@ -11,31 +11,31 @@ public class drive_maybe extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
 
-    DcMotor mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake;
+    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake;
 
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        mtrBL = hardwareMap.get(DcMotor.class, "mtrBL");
-        mtrBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        mtrBL.setDirection(DcMotor.Direction.REVERSE);
+        mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
+        mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
 
-        mtrBR = hardwareMap.get(DcMotor.class, "mtrBR");
-        mtrBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        mtrBR.setDirection(DcMotor.Direction.FORWARD);
+        mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
+        mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
 
-        mtrFL = hardwareMap.get(DcMotor.class, "mtrFL");
-        mtrFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        mtrFL.setDirection(DcMotor.Direction.REVERSE);
+        mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
+        mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
 
-        mtrFR = hardwareMap.get(DcMotor.class, "mtrFR");
-        mtrFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        mtrFR.setDirection(DcMotor.Direction.FORWARD);
+        mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
+        mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
 
-        mtrIntake = hardwareMap.get(DcMotor.class, "mtrIntake");
-        mtrIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        mtrIntake.setDirection(DcMotor.Direction.FORWARD);
+        mtrIntake = hardwareMap.get(DcMotorEx.class, "mtrIntake");
+        mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrIntake.setDirection(DcMotorEx.Direction.FORWARD);
 
         waitForStart();
         runtime.reset();
