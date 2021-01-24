@@ -5,12 +5,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop just dt",group="Linear Opmode")
+@TeleOp(name="teleop dt+intake",group="Linear Opmode")
 
 public class drive_maybe extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
-
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake;
 
     public void runOpMode() {
