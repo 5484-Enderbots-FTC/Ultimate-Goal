@@ -1,29 +1,21 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.TouchSensor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 
-@TeleOp(name="flywheel_test",group="Linear Opmode")
-@Disabled
-public class flywheel_test extends LinearOpMode{
+@TeleOp(name="double_flywheel",group="Linear Opmode")
+public class double_flywheel extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
 
-    DcMotor mtrLeft , mtrRight;
-    //Servo svoLoad;
+    DcMotor mtrLeft, mtrRight;
 
     final double noSpeed = 0;
     double speedValue = 0;
     final double speedIncrement = 0.0001;
-    //double load = 0;
 
     public void runOpMode() {
         telemetry.addData("Status:", "Begin init");
@@ -41,13 +33,6 @@ public class flywheel_test extends LinearOpMode{
         mtrRight.setDirection(DcMotor.Direction.FORWARD);
         mtrRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        /*
-        svoLoad = hardwareMap.get(Servo.class, "extend");
-        svoLoad.setDirection(Servo.Direction.FORWARD);
-
-        svoLoad.setPosition(load);
-         */
-
         waitForStart();
         runtime.reset();
 
@@ -56,6 +41,9 @@ public class flywheel_test extends LinearOpMode{
 
         while (opModeIsActive()) {
 
+            mtrLeft.setPower(gamepad1.left_stick_y);
+            mtrRight.setPower(gamepad1.left_stick_y-0.1);
+/*
             if(gamepad1.dpad_up){
                 speedValue += speedIncrement;
                 setSpeed(speedValue);
@@ -65,10 +53,15 @@ public class flywheel_test extends LinearOpMode{
                 setSpeed(speedValue);
             }
 
+ */
+
             if(gamepad1.a){
                 speedValue = noSpeed;
-                setSpeed(speedValue);
+                mtrLeft.setPower(noSpeed);
+                mtrRight.setPower(noSpeed);
             }
+
+
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Speed = ", speedValue);
