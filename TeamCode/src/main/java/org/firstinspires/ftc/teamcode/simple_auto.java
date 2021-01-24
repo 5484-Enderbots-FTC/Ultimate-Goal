@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Foundation Only", group = "Concept")
+@Autonomous(name = "simple_auto", group = "Concept")
 public class simple_auto extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
