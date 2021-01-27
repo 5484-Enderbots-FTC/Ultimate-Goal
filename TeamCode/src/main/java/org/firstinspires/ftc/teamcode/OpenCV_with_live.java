@@ -36,7 +36,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
-@TeleOp(name = "openCV with live", group = "Concept")
+@TeleOp(name = "openCV with live", group = "testing")
 public class OpenCV_with_live extends LinearOpMode {
     OpenCvCamera webcam;
     RingStackDeterminationPipeline pipeline;

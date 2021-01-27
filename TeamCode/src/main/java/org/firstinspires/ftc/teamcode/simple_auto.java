@@ -4,9 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "simple_auto", group = "Concept")
+@Autonomous(name = "simple_auto", group = "auto")
 public class simple_auto extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
@@ -25,17 +26,25 @@ public class simple_auto extends LinearOpMode {
         //configuration of robot stuff
 
         //motors
-        mtrFR = hardwareMap.get(DcMotor.class, "rightFront_drive");
-        mtrFR.setDirection(DcMotor.Direction.REVERSE);
+        mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
+        mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
 
-        mtrFL = hardwareMap.get(DcMotor.class, "leftFront_drive");
-        mtrFL.setDirection(DcMotor.Direction.FORWARD);
+        mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
+        mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
 
-        mtrBL = hardwareMap.get(DcMotor.class, "leftBack_drive");
-        mtrBL.setDirection(DcMotor.Direction.FORWARD);
+        mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
+        mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
 
-        mtrBR = hardwareMap.get(DcMotor.class, "rightBack_drive");
-        mtrBR.setDirection(DcMotor.Direction.REVERSE);
+        mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
+        mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
+
+        mtrIntake = hardwareMap.get(DcMotorEx.class, "mtrIntake");
+        mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrIntake.setDirection(DcMotorEx.Direction.FORWARD);
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -103,16 +112,18 @@ public class simple_auto extends LinearOpMode {
 
 
     private void forward(double power) {
-        mtrFR.setPower(power);
-        mtrFL.setPower(power);
         mtrBL.setPower(power);
         mtrBR.setPower(power);
+        mtrFL.setPower(power);
+        mtrFR.setPower(power);
+
+
     }
     private void forwardPosition(int position) {
-        mtrFR.setTargetPosition(position);
-        mtrFL.setTargetPosition(position);
-        mtrBR.setTargetPosition(position);
-        mtrBL.setTargetPosition(position);
+        mtrBL.setTargetPosition(position*(int)ticksPerMmCalibrated);
+        mtrBR.setTargetPosition(position*(int)ticksPerMmCalibrated);
+        mtrFL.setTargetPosition(position*(int)ticksPerMmCalibrated);
+        mtrFR.setTargetPosition(position*(int)ticksPerMmCalibrated);
     }
     private void encoderForward(double power, int position){
         resetEncoders();
@@ -125,16 +136,16 @@ public class simple_auto extends LinearOpMode {
     }
 
     private void strafe(double power) {
-        mtrFR.setPower(-power * strafeSwapper);
-        mtrFL.setPower(power * strafeSwapper);
-        mtrBL.setPower(-power * strafeSwapper);
-        mtrBR.setPower(power * strafeSwapper);
+        mtrBL.setPower(power);
+        mtrBR.setPower(-power);
+        mtrFL.setPower(-power);
+        mtrFR.setPower(power);
     }
     private void strafePosition(int position){
-        mtrFR.setTargetPosition(-position * strafeSwapper);
-        mtrFL.setTargetPosition(position * strafeSwapper);
-        mtrBR.setTargetPosition(position * strafeSwapper);
-        mtrBL.setTargetPosition(-position * strafeSwapper);
+        mtrBL.setTargetPosition(position*(int)ticksPerMmCalibrated);
+        mtrBR.setTargetPosition(-position*(int)ticksPerMmCalibrated);
+        mtrFL.setTargetPosition(-position*(int)ticksPerMmCalibrated);
+        mtrFR.setTargetPosition(position*(int)ticksPerMmCalibrated);
     }
     private void encoderStrafe(double power, int position){
         resetEncoders();

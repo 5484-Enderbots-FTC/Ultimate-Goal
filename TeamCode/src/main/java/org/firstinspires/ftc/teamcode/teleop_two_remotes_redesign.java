@@ -16,7 +16,7 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
-@TeleOp(name="teleop_two_remotes_redesign", group="Linear Opmode")
+@TeleOp(name="two_remote_chomper", group="teleop")
 @Disabled
 public class teleop_two_remotes_redesign extends LinearOpMode {
 

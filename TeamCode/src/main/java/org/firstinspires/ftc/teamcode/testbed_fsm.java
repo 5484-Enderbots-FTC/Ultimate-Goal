@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="testbed_fsm",group="Linear Opmode")
+@TeleOp(name="testbed_fsm",group="testing")
 @Disabled
 public class testbed_fsm extends LinearOpMode{
 

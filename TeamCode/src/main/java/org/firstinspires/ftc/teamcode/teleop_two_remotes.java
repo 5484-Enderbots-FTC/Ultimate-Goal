@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 
 
-@TeleOp(name="teleop_two_remotes", group="Linear Opmode")
+@TeleOp(name="two_remote_deadbot", group="teleop")
 @Disabled
 public class teleop_two_remotes extends LinearOpMode {
 

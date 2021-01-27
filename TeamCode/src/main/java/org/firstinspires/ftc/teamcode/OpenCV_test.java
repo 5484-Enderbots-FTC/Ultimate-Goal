@@ -23,6 +23,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -35,7 +36,8 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
-@TeleOp(name = "openCV test", group = "Concept")
+@TeleOp(name = "openCV test", group = "testing")
+@Disabled
 public class OpenCV_test extends LinearOpMode {
     OpenCvCamera webcam;
     SkystoneDeterminationPipeline pipeline;
@@ -49,7 +51,7 @@ public class OpenCV_test extends LinearOpMode {
         pipeline = new SkystoneDeterminationPipeline();
 
         webcam = OpenCvCameraFactory.getInstance().createWebcam(webcamName);
-        webcam.setPipeline(new SkystoneDeterminationPipeline());
+        webcam.setPipeline(pipeline);
         webcam.openCameraDeviceAsync(() -> {
 
         });

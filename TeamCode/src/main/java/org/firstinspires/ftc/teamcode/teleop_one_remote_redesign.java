@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
-@TeleOp(name="teleop_one_remote_redesign", group="Linear Opmode")
+@TeleOp(name="one_remote_chomper", group="teleop")
 @Disabled
 public class teleop_one_remote_redesign extends LinearOpMode {
 

@@ -3,18 +3,18 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop dt+intake",group="Linear Opmode")
+@TeleOp(name="teleop dt+intake",group="teleop")
 
 public class drive_maybe extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake;
+    Servo svoWobble;
 
     public void runOpMode() {
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
 
         mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
         mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -36,6 +36,14 @@ public class drive_maybe extends LinearOpMode{
         mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         mtrIntake.setDirection(DcMotorEx.Direction.FORWARD);
 
+        svoWobble = hardwareMap.get(Servo.class,"svoWobble");
+        svoWobble.setDirection(Servo.Direction.FORWARD);
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+
+        svoWobble.setPosition(0.9);
+
         waitForStart();
         runtime.reset();
 
@@ -54,6 +62,9 @@ public class drive_maybe extends LinearOpMode{
             }
             if (gamepad1.x){
                 mtrIntake.setPower(-0.8);
+            }
+            if (gamepad1.right_bumper){
+                svoWobble.setPosition(0.4);
             }
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
