@@ -6,8 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop dt+intake",group="teleop")
-
+@TeleOp(name="teleop normal",group="teleop")
 public class drive_maybe extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
@@ -42,7 +41,7 @@ public class drive_maybe extends LinearOpMode{
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        svoWobble.setPosition(0.9);
+        svoWobble.setPosition(0.95);
 
         waitForStart();
         runtime.reset();
@@ -64,7 +63,10 @@ public class drive_maybe extends LinearOpMode{
                 mtrIntake.setPower(-0.8);
             }
             if (gamepad1.right_bumper){
-                svoWobble.setPosition(0.4);
+                svoWobble.setPosition(0.3);
+            }
+            if (gamepad1.left_bumper){
+                svoWobble.setPosition(0.95);
             }
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
