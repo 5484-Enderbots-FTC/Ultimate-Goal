@@ -21,13 +21,15 @@
 
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.State;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -38,10 +40,9 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 @Autonomous(name = "wobble + park", group = "auto")
-public class auto_wobble_park extends LinearOpMode {
+public class auto_wobble_park_FSM extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
     //OpenCV stuff
@@ -52,6 +53,8 @@ public class auto_wobble_park extends LinearOpMode {
     DcMotor mtrBL = null, mtrBR = null, mtrFL = null, mtrFR = null, mtrIntake = null;
 
     Servo svoWobble;
+
+    State currentState;
 
     
     //constants
@@ -80,13 +83,18 @@ public class auto_wobble_park extends LinearOpMode {
         B,
         C
     }
-
     Zone targetZone = Zone.A;
+
+    public enum State{
+        DETECT_RING_STACK,
+        NO_RINGS,
+        ONE_RING,
+        FOUR_RINGS
+    }
 
     @Override
     public void runOpMode() {
         if(!isStopRequested()) {
-
             //openCV config
             int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
             webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -130,83 +138,75 @@ public class auto_wobble_park extends LinearOpMode {
 
 
             waitForStart();
-            if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
-                targetZone = Zone.A;
-                telemetry.addLine("Zone A, no rings");
+
+            currentState = State.DETECT_RING_STACK;
+
+            while (opModeIsActive()) {
+
+                if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE)) {
+                    telemetry.addLine("Zone A, no rings");
+                    telemetry.update();
+                } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE)) {
+                    telemetry.addLine("Zone B, one ring");
+                    telemetry.update();
+                } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR)) {
+                    telemetry.addLine("Zone C, four rings");
+                    telemetry.update();
+                }
+
+                switch (currentState) {
+
+                    case DETECT_RING_STACK:
+                        if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
+                            targetZone = Zone.A;
+                            currentState = State.NO_RINGS;
+                        } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
+                            targetZone = Zone.B;
+                            currentState = State.ONE_RING;
+                        } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
+                            targetZone = Zone.C;
+                            currentState = State.FOUR_RINGS;
+                        }
+                        break;
+                    case NO_RINGS:
+                        //strafe to right wall
+                        encoderStrafe(0.8, 630);
+                        //to zone a
+                        encoderForward(0.6, 930);
+                        //spit
+                        svoWobble.setPosition(0.3);
+
+                        //strafe left a bit
+                        encoderStrafe(-0.5, -400); //457mm per 1.5ft
+                        //park
+                        encoderForward(0.8, 150); //152 per 0.5ftc
+                        break;
+                    case ONE_RING:
+                        //to zone b
+                        encoderForward(0.8, 1250); //2438mm per 8ft
+                        //strafe to right a bit
+                        encoderStrafe(0.4, 260); //152 per 0.5ftc
+                        //spit
+                        svoWobble.setPosition(0.3);
+                        //back up park
+                        encoderForward(-0.8, -220); //152 per 0.5ftc
+                        break;
+                    case FOUR_RINGS:
+                        //strafe to right wall
+                        encoderStrafe(0.8, 630); //914mm per 3ft
+                        //to zone a
+                        encoderForward(0.8, 1570); //3048mm per 10ft
+                        //spit
+                        svoWobble.setPosition(0.3);
+                        //back up park
+                        encoderForward(-0.8, -420); //457mm per 1.5ftc
+                        break;
+                }
+
+                telemetry.addData("Analysis", pipeline.getAnalysis());
+                telemetry.addData("Position", pipeline.position);
                 telemetry.update();
-
-            /*
-            Pathing:
-            Straight right to wall basically
-            Forward
-            Spit out wobble goal
-            Back up for park
-            dOnE
-             */
-
-                //all values are tentative
-
-                //strafe to right wall
-                encoderStrafe(0.8, 630);
-                //to zone a
-                encoderForward(0.6, 930);
-                //spit
-                svoWobble.setPosition(0.3);
-
-                //strafe left a bit
-                encoderStrafe(-0.5, -400); //457mm per 1.5ft
-                //park
-                encoderForward(0.8, 150); //152 per 0.5ftc
-
-
-            } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
-                targetZone = Zone.B;
-                telemetry.addLine("Zone B, one ring");
-                telemetry.update();
-            /*
-            Pathing:
-            Forward a bunch
-            Strafe right a bit
-            Spit out wobble goal
-            Back up for park
-            dOnE
-             */
-                //to zone b
-                encoderForward(0.8, 1250); //2438mm per 8ft
-                //strafe to right a bit
-                encoderStrafe(0.4, 260); //152 per 0.5ftc
-                //spit
-                svoWobble.setPosition(0.3);
-                //back up park
-                encoderForward(-0.8, -220); //152 per 0.5ftc
-
-            } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
-                targetZone = Zone.C;
-                telemetry.addLine("Zone C, four rings");
-                telemetry.update();
-            /*
-            Pathing:
-            Straight right to wall basically
-            Forward (but more than zone A)
-            Spit out wobble goal
-            Back up for park
-            dOnE
-             */
-
-                //strafe to right wall
-                encoderStrafe(0.8, 630); //914mm per 3ft
-                //to zone a
-                encoderForward(0.8, 1570); //3048mm per 10ft
-                //spit
-                svoWobble.setPosition(0.3);
-                //back up park
-                encoderForward(-0.8, -420); //457mm per 1.5ftc
-
             }
-
-            telemetry.addData("Analysis", pipeline.getAnalysis());
-            telemetry.addData("Position", pipeline.position);
-            telemetry.update();
         }
     }
 
