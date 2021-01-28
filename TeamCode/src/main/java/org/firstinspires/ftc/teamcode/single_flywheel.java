@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="single_flywheel",group="testing")
+@Disabled
 public class single_flywheel extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();

@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "simple_auto", group = "auto")
+@Disabled
 public class simple_auto extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
