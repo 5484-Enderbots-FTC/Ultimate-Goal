@@ -21,13 +21,14 @@
 
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -38,10 +39,9 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
-@Autonomous(name = "wobble park", group = "auto")
-public class auto_wobble_park extends LinearOpMode {
+@Autonomous(name = "wobble shoot park", group = "auto")
+public class auto_wobble_shoot_park extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
     //OpenCV stuff
@@ -53,7 +53,7 @@ public class auto_wobble_park extends LinearOpMode {
 
     Servo svoWobble;
 
-    
+
     //constants
     private final double ticksPerMm = 1.68240559922;
     private final double ticksPerMmCalibratedOld = 1.518268;

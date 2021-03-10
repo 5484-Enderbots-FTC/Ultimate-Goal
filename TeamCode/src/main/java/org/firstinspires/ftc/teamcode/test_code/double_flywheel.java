@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="double_flywheel",group="testing")
-@Disabled
 public class double_flywheel extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
@@ -16,7 +15,6 @@ public class double_flywheel extends LinearOpMode{
 
     final double noSpeed = 0;
     double speedValue = 0;
-    final double speedIncrement = 0.0001;
 
     public void runOpMode() {
         telemetry.addData("Status:", "Begin init");
@@ -42,8 +40,20 @@ public class double_flywheel extends LinearOpMode{
 
         while (opModeIsActive()) {
 
+
             mtrLeft.setPower(gamepad1.left_stick_y);
-            mtrRight.setPower(gamepad1.left_stick_y-0.1);
+            if(gamepad1.left_stick_y >= 0.1){
+                mtrRight.setPower(gamepad1.left_stick_y-0.05);
+            }
+            else{
+                mtrRight.setPower(gamepad1.left_stick_y);
+            }
+
+            while(gamepad1.b){
+                mtrLeft.setPower(0.3);
+                mtrRight.setPower(0.15);
+
+            }
 /*
             if(gamepad1.dpad_up){
                 speedValue += speedIncrement;
@@ -65,8 +75,8 @@ public class double_flywheel extends LinearOpMode{
 
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Gamepad value = ", gamepad1.left_stick_y);
             telemetry.addData("Speed = ", speedValue);
-            telemetry.addData("Speed Increment = ", speedIncrement);
             telemetry.update();
         }
 
