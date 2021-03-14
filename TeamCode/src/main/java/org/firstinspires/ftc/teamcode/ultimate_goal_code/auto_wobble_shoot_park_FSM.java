@@ -25,6 +25,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -41,38 +42,31 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-@Autonomous(name = "wobble + park FSM", group = "auto")
-public class auto_wobble_park_FSM extends LinearOpMode {
+@Autonomous(name = "wobble + shoot + park FSM", group = "auto")
+public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
+    ElapsedTime timer = new ElapsedTime();
 
     //OpenCV stuff
     OpenCvCamera webcam;
     RingStackDeterminationPipeline pipeline;
 
     //motors
-    DcMotor mtrBL = null, mtrBR = null, mtrFL = null, mtrFR = null, mtrIntake = null;
-
-    Servo svoWobble;
+    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
+    Servo svoWobble, svoMagLift, svoRingPush;
 
     State currentState;
 
     
     //constants
-    private final double ticksPerMm = 1.68240559922;
-    private final double ticksPerMmCalibratedOld = 1.518268;
-    private final double ticksPerMmCalibrated = 3.6422;
+    private final double ticksPerInchCalibrated = 3.6422;
 
-    /*
-    calibraition time:
-    told it to go 3ft, it went 1.25ft (15in)
-    the current ticks per mm is 1.518
-    1.25ft -> 381mm
-    3ft    -> 914mm
-    914/381 = 2.3 ish
-    old calibration * 2.3 = 3.6422
-
-     */
-
+    double magDown = 0.85;
+    double magUp = 0.58;
+    double ringPushOut = 0.6;
+    double ringPushIn = 0.75;
+    double wobbleRelease = 0.48;
+    double wobbleHold = 0.1;
 
     public static class var{
         private static int RingStackIndentified = 0;
@@ -94,7 +88,7 @@ public class auto_wobble_park_FSM extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        if(!isStopRequested()) {
+
             //openCV config
             int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
             webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -125,10 +119,18 @@ public class auto_wobble_park_FSM extends LinearOpMode {
             mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             mtrIntake.setDirection(DcMotorEx.Direction.FORWARD);
 
-            svoWobble = hardwareMap.get(Servo.class, "svoWobble");
-            svoWobble.setDirection(Servo.Direction.FORWARD);
+            mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
+            mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+            mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
-            svoWobble.setPosition(0.95);
+            svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
+            svoMagLift.setDirection(Servo.Direction.FORWARD);
+
+            svoRingPush = hardwareMap.get(Servo.class,"svoRingPush");
+            svoRingPush.setDirection(Servo.Direction.REVERSE);
+
+            svoWobble = hardwareMap.get(Servo.class,"svoWobble");
+            svoWobble.setDirection(Servo.Direction.FORWARD);
 
             telemetry.addData("Status", "Initialized");
             telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -138,7 +140,6 @@ public class auto_wobble_park_FSM extends LinearOpMode {
 
 
             waitForStart();
-
             currentState = State.DETECT_RING_STACK;
 
             while (opModeIsActive()) {
@@ -169,37 +170,60 @@ public class auto_wobble_park_FSM extends LinearOpMode {
                         }
                         break;
                     case NO_RINGS:
-                        //strafe to right wall
-                        encoderStrafe(0.8, 630);
-                        //to zone a
-                        encoderForward(0.6, 930);
-                        //spit
-                        svoWobble.setPosition(0.3);
+                        telemetry.addLine("Zone A, no rings");
+                        telemetry.update();
+                        //forward to shooting pos whereever the donde that is lol and shoot shoot
+                        encoderForward(0,0);
+                        shootThree(1);
 
-                        //strafe left a bit
-                        encoderStrafe(-0.5, -400); //457mm per 1.5ft
+                        // nav to zone a
+                        encoderForward(0,0);
+                        encoderStrafe(0,0);
+
+                        //back up to second wobble (no rings so navigate however)
+
+                        //180 spin spin
+
+                        //drop it like its hot
+
                         //park
-                        encoderForward(0.8, 150); //152 per 0.5ftc
+
+
                         break;
                     case ONE_RING:
-                        //to zone b
-                        encoderForward(0.8, 1250); //2438mm per 8ft
-                        //strafe to right a bit
-                        encoderStrafe(0.4, 260); //152 per 0.5ftc
-                        //spit
-                        svoWobble.setPosition(0.3);
-                        //back up park
-                        encoderForward(-0.8, -220); //152 per 0.5ftc
+                        telemetry.addLine("Zone B, one ring");
+                        telemetry.update();
+                        //forward to shooting pos donde estas and brrrr
+                        encoderForward(0,0);
+                        shootThree(1);
+                        //nav to zone b and rain drop drop top
+
+                        //back up to second wobble
+
+                        //scooch over and forward to the single ring and turn on the intake and yOink
+
+                        //tHEn 180 woosh
+
+                        //drip drop
+
+                        //park
+
                         break;
                     case FOUR_RINGS:
-                        //strafe to right wall
-                        encoderStrafe(0.8, 630); //914mm per 3ft
-                        //to zone a
-                        encoderForward(0.8, 1570); //3048mm per 10ft
-                        //spit
-                        svoWobble.setPosition(0.3);
-                        //back up park
-                        encoderForward(-0.8, -420); //457mm per 1.5ftc
+                        telemetry.addLine("Zone C, four rings");
+                        telemetry.update();
+                        //forward to shooter babey skrrrAH
+                        encoderForward(0,0);
+                        shootThree(1);
+                        //nav to zone c lol
+
+                        //then back that ass straight tf up along the wall then strafe at the right point to pick up wobble dos
+
+                        //180 babey
+
+                        //zone c again
+
+                        //park
                         break;
                 }
 
@@ -207,14 +231,11 @@ public class auto_wobble_park_FSM extends LinearOpMode {
                 telemetry.addData("Position", pipeline.position);
                 telemetry.update();
             }
-        }
     }
 
 
     public static class RingStackDeterminationPipeline extends OpenCvPipeline
     {
-
-        private double RingStackIdentified;
 
         public enum RingPosition
         {
@@ -305,9 +326,27 @@ public class auto_wobble_park_FSM extends LinearOpMode {
         }
     }
     private void waitFor(double waittime) {
-        runtime.reset();
-        while (runtime.time() < waittime) {
+        timer.reset();
+        while (timer.seconds() < waittime) {
         }
+    }
+
+    private void pushARing(){
+        svoRingPush.setPosition(ringPushOut);
+        waitFor(0.5);
+        svoRingPush.setPosition(ringPushIn);
+    }
+    private void shootThree(double inBetweenRingTime){
+        mtrFlywheel.setPower(1);
+        waitFor(1.5);
+        pushARing();
+        waitFor(inBetweenRingTime);
+        pushARing();
+        waitFor(inBetweenRingTime);
+        pushARing();
+        waitFor(inBetweenRingTime);
+        mtrFlywheel.setPower(0);
+        
     }
     private void resetEncoders() {
         mtrFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -315,14 +354,12 @@ public class auto_wobble_park_FSM extends LinearOpMode {
         mtrBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mtrBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
-
     private void runToPosition() {
         mtrFR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrFL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrBR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
-
     private void brakeMotors() {
         mtrFL.setPower(0);
         mtrFR.setPower(0);
@@ -344,7 +381,6 @@ public class auto_wobble_park_FSM extends LinearOpMode {
         mtrBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-
     private void forward(double power) {
         mtrBL.setPower(power);
         mtrBR.setPower(power);
@@ -353,15 +389,15 @@ public class auto_wobble_park_FSM extends LinearOpMode {
         
         
     }
-    private void forwardPosition(int distance_mm) {
-        mtrBL.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrBR.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrFL.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrFR.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
+    private void forwardPosition(int distance_inches) {
+        mtrBL.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrBR.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrFL.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrFR.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
     }
-    private void encoderForward(double power, int distance_mm){
+    private void encoderForward(double power, int distance_inches){
         resetEncoders();
-        forwardPosition(-distance_mm);
+        forwardPosition(-distance_inches);
         runToPosition();
         forward(power);
         mtrFRisBusy();
@@ -375,15 +411,15 @@ public class auto_wobble_park_FSM extends LinearOpMode {
         mtrFL.setPower(-power);
         mtrFR.setPower(power);
     }
-    private void strafePosition(int distance_mm){
-        mtrBL.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrBR.setTargetPosition(-distance_mm*(int)ticksPerMmCalibrated);
-        mtrFL.setTargetPosition(-distance_mm*(int)ticksPerMmCalibrated);
-        mtrFR.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
+    private void strafePosition(int distance_inches){
+        mtrBL.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrBR.setTargetPosition(-distance_inches*(int)ticksPerInchCalibrated);
+        mtrFL.setTargetPosition(-distance_inches*(int)ticksPerInchCalibrated);
+        mtrFR.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
     }
-    private void encoderStrafe(double power, int distance_mm){
+    private void encoderStrafe(double power, int distance_inches){
         resetEncoders();
-        strafePosition(distance_mm);
+        strafePosition(distance_inches);
         runToPosition();
         strafe(power);
         mtrFRisBusy();

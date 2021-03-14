@@ -14,7 +14,7 @@ public class teleop_control_normal extends LinearOpMode{
     ElapsedTime timer = new ElapsedTime();
 
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
-    Servo svoMagLift, svoRingPush;
+    Servo svoWobble, svoMagLift, svoRingPush;
 
     rndmState currentState;
 
@@ -27,6 +27,8 @@ public class teleop_control_normal extends LinearOpMode{
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
+    double wobbleRelease = 0.48;
+    double wobbleHold = 0.1;
     boolean magIsUp = false;
 
 
@@ -64,7 +66,7 @@ public class teleop_control_normal extends LinearOpMode{
 
         mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
         mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        mtrFlywheel.setDirection(DcMotorEx.Direction.FORWARD);
+        mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
         svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
         svoMagLift.setDirection(Servo.Direction.FORWARD);
@@ -72,12 +74,15 @@ public class teleop_control_normal extends LinearOpMode{
         svoRingPush = hardwareMap.get(Servo.class,"svoRingPush");
         svoRingPush.setDirection(Servo.Direction.REVERSE);
 
+        svoWobble = hardwareMap.get(Servo.class,"svoWobble");
+        svoWobble.setDirection(Servo.Direction.FORWARD);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        //svoWobble.setPosition(wobbleGrab);
         svoRingPush.setPosition(ringPushIn);
         svoMagLift.setPosition(magDown);
+        svoWobble.setPosition(wobbleHold);
         magIsUp = false;
 
         currentState = rndmState.INTAKE_START;
@@ -106,26 +111,37 @@ public class teleop_control_normal extends LinearOpMode{
             }
 
             if (magIsUp){
-                if(gamepad2.a){
+                mtrIntake.setPower(0);
+                if(gamepad2.right_bumper){
                     svoRingPush.setPosition(ringPushOut);
                     waitFor(0.5);
                     svoRingPush.setPosition(ringPushIn);
                 }
             }
+
             if(gamepad2.dpad_up){
                 svoMagLift.setPosition(magUp);
+                mtrFlywheel.setPower(1);
                 magIsUp = true;
             }
             if(gamepad2.dpad_down){
+                mtrIntake.setPower(1);
                 svoMagLift.setPosition(magDown);
+                mtrFlywheel.setPower(0);
                 magIsUp = false;
             }
 
-            if(gamepad2.x){
+            if(gamepad2.a){
                 mtrFlywheel.setPower(1);
             }
             if(gamepad2.b){
                 mtrFlywheel.setPower(0);
+            }
+            if(gamepad2.dpad_left){
+                svoWobble.setPosition(wobbleHold);
+            }
+            if(gamepad2.dpad_right){
+                svoWobble.setPosition(wobbleRelease);
             }
 
             telemetry.addData("Status", " Run Time: " + runtime.toString());
@@ -136,8 +152,8 @@ public class teleop_control_normal extends LinearOpMode{
 
     }
     private void waitFor(double waittime) {
-        runtime.reset();
-        while (runtime.seconds() < waittime) {
+        timer.reset();
+        while (timer.seconds() < waittime) {
             //pls keep driving lol
             mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
             mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));

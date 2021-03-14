@@ -49,15 +49,13 @@ public class auto_wobble_shoot_park extends LinearOpMode {
     RingStackDeterminationPipeline pipeline;
 
     //motors
-    DcMotor mtrBL = null, mtrBR = null, mtrFL = null, mtrFR = null, mtrIntake = null;
-
-    Servo svoWobble;
-
+    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
+    Servo svoWobble, svoMagLift, svoRingPush;
 
     //constants
     private final double ticksPerMm = 1.68240559922;
-    private final double ticksPerMmCalibratedOld = 1.518268;
-    private final double ticksPerMmCalibrated = 3.6422;
+    private final double ticksPerInchCalibratedOld = 1.518268;
+    private final double ticksPerInchCalibrated = 3.6422;
 
     /*
     calibraition time:
@@ -69,7 +67,6 @@ public class auto_wobble_shoot_park extends LinearOpMode {
     old calibration * 2.3 = 3.6422
 
      */
-
 
     public static class var{
         private static int RingStackIndentified = 0;
@@ -117,10 +114,18 @@ public class auto_wobble_shoot_park extends LinearOpMode {
             mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             mtrIntake.setDirection(DcMotorEx.Direction.FORWARD);
 
-            svoWobble = hardwareMap.get(Servo.class, "svoWobble");
-            svoWobble.setDirection(Servo.Direction.FORWARD);
+            mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
+            mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+            mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
-            svoWobble.setPosition(0.95);
+            svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
+            svoMagLift.setDirection(Servo.Direction.FORWARD);
+
+            svoRingPush = hardwareMap.get(Servo.class,"svoRingPush");
+            svoRingPush.setDirection(Servo.Direction.REVERSE);
+
+            svoWobble = hardwareMap.get(Servo.class,"svoWobble");
+            svoWobble.setDirection(Servo.Direction.FORWARD);
 
             telemetry.addData("Status", "Initialized");
             telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -144,8 +149,7 @@ public class auto_wobble_shoot_park extends LinearOpMode {
             Back up for park
             dOnE
              */
-
-                //all values are tentative
+                mtrFlywheel.setPower(1);
 
                 //strafe to right wall
                 encoderStrafe(0.8, 630);
@@ -154,7 +158,7 @@ public class auto_wobble_shoot_park extends LinearOpMode {
                 //wait a hot sec cuz momentum makes wobble goal w o b b l e
                 waitFor(0.5);
                 //spit
-                svoWobble.setPosition(0.3);
+
 
                 //strafe left a bit
                 encoderStrafe(-0.5, -400); //457mm per 1.5ft
@@ -182,7 +186,7 @@ public class auto_wobble_shoot_park extends LinearOpMode {
                 //wait a hot sec cuz momentum makes wobble goal w o b b l e
                 waitFor(0.5);
                 //spit
-                svoWobble.setPosition(0.3);
+
                 //back up park
                 encoderForward(-0.8, -220); //152 per 0.5ftc
 
@@ -207,7 +211,7 @@ public class auto_wobble_shoot_park extends LinearOpMode {
                 //wait a hot sec cuz momentum makes wobble goal w o b b l e
                 waitFor(0.5);
                 //spit
-                svoWobble.setPosition(0.3);
+
                 //back up park
                 encoderForward(-0.8, -420); //457mm per 1.5ftc
 
@@ -354,15 +358,15 @@ public class auto_wobble_shoot_park extends LinearOpMode {
         
         
     }
-    private void forwardPosition(int distance_mm) {
-        mtrBL.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrBR.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrFL.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrFR.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
+    private void forwardPosition(int distance_inches) {
+        mtrBL.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrBR.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrFL.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrFR.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
     }
-    private void encoderForward(double power, int distance_mm){
+    private void encoderForward(double power, int distance_inches){
         resetEncoders();
-        forwardPosition(-distance_mm);
+        forwardPosition(-distance_inches);
         runToPosition();
         forward(power);
         mtrFRisBusy();
@@ -375,15 +379,15 @@ public class auto_wobble_shoot_park extends LinearOpMode {
         mtrFL.setPower(-power);
         mtrFR.setPower(power);
     }
-    private void strafePosition(int distance_mm){
-        mtrBL.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
-        mtrBR.setTargetPosition(-distance_mm*(int)ticksPerMmCalibrated);
-        mtrFL.setTargetPosition(-distance_mm*(int)ticksPerMmCalibrated);
-        mtrFR.setTargetPosition(distance_mm*(int)ticksPerMmCalibrated);
+    private void strafePosition(int distance_inches){
+        mtrBL.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
+        mtrBR.setTargetPosition(-distance_inches*(int)ticksPerInchCalibrated);
+        mtrFL.setTargetPosition(-distance_inches*(int)ticksPerInchCalibrated);
+        mtrFR.setTargetPosition(distance_inches*(int)ticksPerInchCalibrated);
     }
-    private void encoderStrafe(double power, int distance_mm){
+    private void encoderStrafe(double power, int distance_inches){
         resetEncoders();
-        strafePosition(distance_mm);
+        strafePosition(distance_inches);
         runToPosition();
         strafe(power);
         mtrFRisBusy();
