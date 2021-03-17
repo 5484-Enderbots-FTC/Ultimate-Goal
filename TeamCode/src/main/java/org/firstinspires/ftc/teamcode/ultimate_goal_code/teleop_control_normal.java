@@ -121,7 +121,7 @@ public class teleop_control_normal extends LinearOpMode{
 
             if(gamepad2.dpad_up){
                 svoMagLift.setPosition(magUp);
-                mtrFlywheel.setPower(1);
+                mtrFlywheel.setPower(0.8);
                 magIsUp = true;
             }
             if(gamepad2.dpad_down){
@@ -132,7 +132,7 @@ public class teleop_control_normal extends LinearOpMode{
             }
 
             if(gamepad2.a){
-                mtrFlywheel.setPower(1);
+                mtrFlywheel.setPower(0.8);
             }
             if(gamepad2.b){
                 mtrFlywheel.setPower(0);

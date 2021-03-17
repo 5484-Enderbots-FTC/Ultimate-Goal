@@ -10,9 +10,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.openftc.easyopencv.OpenCvCamera;
 
-@Autonomous(name = "shoot three", group = "auto")
-@Disabled
-public class auto_shooter_three_test extends LinearOpMode {
+@Autonomous(name = "encoder test cri", group = "auto")
+public class encoder_testing_i_hate_it_here extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
 
@@ -28,9 +27,7 @@ public class auto_shooter_three_test extends LinearOpMode {
 
 
     //constants
-    private final double ticksPerMm = 1.68240559922;
-    private final double ticksPerInchCalibratedOld = 1.518268;
-    private final double ticksPerInchCalibrated = 3.6422;
+    private final double ticksPerInchCalibrated = 43.3305;
 
     double magDown = 0.85;
     double magUp = 0.58;
@@ -80,12 +77,15 @@ public class auto_shooter_three_test extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        while(opModeIsActive()){
+
             runtime.reset();
 
-            //encoderForward(0,0);
-            shootThree(1);
-        }
+           encoderForward(0.5,12);
+           //what it was supposed to go: 12inches
+            //what it went:
+            //what the tick value was: 91.44
+            //what i changed it to: 43.0305
+
 
 
     }

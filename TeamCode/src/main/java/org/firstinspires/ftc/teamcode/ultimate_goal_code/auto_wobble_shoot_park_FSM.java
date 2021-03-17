@@ -59,7 +59,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
 
     
     //constants
-    private final double ticksPerInchCalibrated = 3.6422;
+    private final double ticksPerInchCalibrated = 43.3305;
 
     double magDown = 0.85;
     double magUp = 0.58;

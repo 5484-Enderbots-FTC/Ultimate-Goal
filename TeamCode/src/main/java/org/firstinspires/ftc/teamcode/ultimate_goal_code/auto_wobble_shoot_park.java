@@ -55,7 +55,7 @@ public class auto_wobble_shoot_park extends LinearOpMode {
     //constants
     private final double ticksPerMm = 1.68240559922;
     private final double ticksPerInchCalibratedOld = 1.518268;
-    private final double ticksPerInchCalibrated = 3.6422;
+    private final double ticksPerInchCalibrated = 43.3305;
 
     /*
     calibraition time:
