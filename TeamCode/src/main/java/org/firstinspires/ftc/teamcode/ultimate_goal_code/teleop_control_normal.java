@@ -21,6 +21,8 @@ public class teleop_control_normal extends LinearOpMode{
      ~ Constants ~
 
      */
+
+    double flywheelPower = 0.65;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
@@ -96,44 +98,46 @@ public class teleop_control_normal extends LinearOpMode{
              * Gamepad 1 Controls
              */
 
-            if(gamepad1.right_bumper && (backwardsMode = false)){
+            if(gamepad1.right_bumper && (backwardsMode == false)){
                 backwardsMode = true;
             }
-            else if(gamepad1.right_bumper && (backwardsMode = true)){
+            else if(gamepad1.right_bumper && (backwardsMode == true)){
                 backwardsMode = false;
             }
 
-            if(gamepad1.left_bumper && (slowMode = false)){
+            if(gamepad1.left_bumper && (slowMode == false)){
                 slowMode = true;
             }
-            else if(gamepad1.left_bumper && (slowMode = true)){
+            else if(gamepad1.left_bumper && (slowMode == true)){
                 slowMode = false;
             }
 
-            if((backwardsMode = false) && (slowMode = false)) {
+            if((backwardsMode == false) && (slowMode == false)) {
                 mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
                 mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
                 mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
                 mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
             }
-            if((backwardsMode = true) && (slowMode = false)){
-                mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-                mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-                mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
-                mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+            if((backwardsMode == true) && (slowMode == false)){
+                mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+                mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+                mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
             }
-            if((backwardsMode = false) && (slowMode = true)){
+            if((backwardsMode == false) && (slowMode == true)){
                 mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
                 mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
                 mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
                 mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
             }
-            if((backwardsMode = true) && (slowMode = true)){
-                mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
-                mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
-                mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
-                mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+            if((backwardsMode == true) && (slowMode == true)){
+                mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
             }
+
+
 
             if (gamepad1.a){
                 mtrIntake.setPower(1);
@@ -165,7 +169,7 @@ public class teleop_control_normal extends LinearOpMode{
 
             if(gamepad2.dpad_up){
                 svoMagLift.setPosition(magUp);
-                mtrFlywheel.setPower(0.8);
+                mtrFlywheel.setPower(flywheelPower);
                 magIsUp = true;
             }
             if(gamepad2.dpad_down){
@@ -176,24 +180,19 @@ public class teleop_control_normal extends LinearOpMode{
             }
 
             if(gamepad2.a){
-                mtrFlywheel.setPower(0.8);
+                mtrFlywheel.setPower(flywheelPower);
             }
             if(gamepad2.b){
                 mtrFlywheel.setPower(0);
             }
 
-            if(gamepad2.left_bumper && (forkHeld = false)){
+            if(gamepad2.left_bumper && (forkHeld == false)){
+                svoForkHold.setPosition(forkHold);
                 forkHeld = true;
             }
-            else if(gamepad2.left_bumper && (forkHeld = true)){
-                forkHeld = false;
-            }
-
-            if(forkHeld = true){
-                svoForkHold.setPosition(forkHold);
-            }
-            if(forkHeld = false){
+            else if(gamepad2.left_bumper && (forkHeld == true)){
                 svoForkHold.setPosition(forkRelease);
+                forkHeld = false;
             }
 
             /**

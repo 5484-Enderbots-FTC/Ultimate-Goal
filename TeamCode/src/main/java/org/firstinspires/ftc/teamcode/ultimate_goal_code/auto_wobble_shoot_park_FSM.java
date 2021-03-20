@@ -382,7 +382,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         svoRingPush.setPosition(ringPushIn);
     }
     private void shootThree(double inBetweenRingTime){
-        mtrFlywheel.setPower(1);
+        mtrFlywheel.setPower(0.7);
         waitFor(1);
         pushARing();
         waitFor(inBetweenRingTime);
