@@ -16,8 +16,6 @@ public class teleop_control_normal extends LinearOpMode{
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
-    rndmState currentState;
-
     /***
 
      ~ Constants ~
@@ -27,6 +25,7 @@ public class teleop_control_normal extends LinearOpMode{
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
+    double ringJamnt = 0.2;
     double wobbleRelease = 0.37;
     double wobbleHold = 0.2;
     double forkHold = 0.8;
@@ -35,13 +34,7 @@ public class teleop_control_normal extends LinearOpMode{
     boolean magIsUp = false;
     boolean backwardsMode = false;
     boolean slowMode = false;
-
-
-    public enum rndmState{
-        INTAKE_START,
-        WOBBLE_HOLD,
-        WOBBLE_RELEASE
-    }
+    boolean forkHeld = true;
 
     public void runOpMode() {
 
@@ -91,9 +84,7 @@ public class teleop_control_normal extends LinearOpMode{
         svoRingPush.setPosition(ringPushIn);
         svoMagLift.setPosition(magDown);
         svoWobble.setPosition(wobbleHold);
-        magIsUp = false;
-
-        currentState = rndmState.INTAKE_START;
+        svoForkHold.setPosition(forkHold);
 
         waitForStart();
         runtime.reset();
@@ -144,8 +135,6 @@ public class teleop_control_normal extends LinearOpMode{
                 mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
             }
 
-            mtrWobble.setPower(gamepad2.right_stick_y);
-
             if (gamepad1.a){
                 mtrIntake.setPower(1);
             }
@@ -160,6 +149,8 @@ public class teleop_control_normal extends LinearOpMode{
              * Gamepad 2 Controls
              */
 
+            mtrWobble.setPower(gamepad2.right_stick_y);
+
             if (magIsUp){
                 mtrIntake.setPower(0);
                 if(gamepad2.right_bumper){
@@ -167,6 +158,9 @@ public class teleop_control_normal extends LinearOpMode{
                     waitFor(0.5);
                     svoRingPush.setPosition(ringPushIn);
                 }
+            }
+            if (gamepad2.y){
+                svoRingPush.setPosition(ringJamnt);
             }
 
             if(gamepad2.dpad_up){
@@ -187,16 +181,24 @@ public class teleop_control_normal extends LinearOpMode{
             if(gamepad2.b){
                 mtrFlywheel.setPower(0);
             }
-            if(gamepad2.dpad_right){
+
+            if(gamepad2.left_bumper && (forkHeld = false)){
+                forkHeld = true;
+            }
+            else if(gamepad2.left_bumper && (forkHeld = true)){
+                forkHeld = false;
+            }
+
+            if(forkHeld = true){
                 svoForkHold.setPosition(forkHold);
             }
-            if(gamepad2.dpad_left){
+            if(forkHeld = false){
                 svoForkHold.setPosition(forkRelease);
             }
 
-            if(gamepad2.left_bumper){
-                svoWobble.setPosition(wobbleRelease);
-            }
+            /**
+             * Telemetry
+             */
 
             telemetry.addData("Status", " Run Time: " + runtime.toString());
             telemetry.addData("Timer Status", " Time: " + timer.toString());
