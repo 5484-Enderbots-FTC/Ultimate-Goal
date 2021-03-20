@@ -14,7 +14,7 @@ public class teleop_control_normal extends LinearOpMode{
     ElapsedTime timer = new ElapsedTime();
 
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
-    Servo svoWobble, svoMagLift, svoRingPush;
+    Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
     rndmState currentState;
 
@@ -27,9 +27,14 @@ public class teleop_control_normal extends LinearOpMode{
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
-    double wobbleRelease = 0.48;
-    double wobbleHold = 0.1;
+    double wobbleRelease = 0.37;
+    double wobbleHold = 0.2;
+    double forkHold = 0.8;
+    double forkRelease = 0.7;
+
     boolean magIsUp = false;
+    boolean backwardsMode = false;
+    boolean slowMode = false;
 
 
     public enum rndmState{
@@ -77,6 +82,9 @@ public class teleop_control_normal extends LinearOpMode{
         svoWobble = hardwareMap.get(Servo.class,"svoWobble");
         svoWobble.setDirection(Servo.Direction.FORWARD);
 
+        svoForkHold = hardwareMap.get(Servo.class,"svoForkHold");
+        svoForkHold.setDirection(Servo.Direction.FORWARD);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -93,10 +101,48 @@ public class teleop_control_normal extends LinearOpMode{
 
         while (opModeIsActive()) {
 
-            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            /**
+             * Gamepad 1 Controls
+             */
+
+            if(gamepad1.right_bumper && (backwardsMode = false)){
+                backwardsMode = true;
+            }
+            else if(gamepad1.right_bumper && (backwardsMode = true)){
+                backwardsMode = false;
+            }
+
+            if(gamepad1.left_bumper && (slowMode = false)){
+                slowMode = true;
+            }
+            else if(gamepad1.left_bumper && (slowMode = true)){
+                slowMode = false;
+            }
+
+            if((backwardsMode = false) && (slowMode = false)) {
+                mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+                mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+                mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            }
+            if((backwardsMode = true) && (slowMode = false)){
+                mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+                mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+                mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+            }
+            if((backwardsMode = false) && (slowMode = true)){
+                mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+            }
+            if((backwardsMode = true) && (slowMode = true)){
+                mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+            }
 
             mtrWobble.setPower(gamepad2.right_stick_y);
 
@@ -109,6 +155,10 @@ public class teleop_control_normal extends LinearOpMode{
             if (gamepad1.x){
                 mtrIntake.setPower(-1);
             }
+
+            /**
+             * Gamepad 2 Controls
+             */
 
             if (magIsUp){
                 mtrIntake.setPower(0);
@@ -137,15 +187,21 @@ public class teleop_control_normal extends LinearOpMode{
             if(gamepad2.b){
                 mtrFlywheel.setPower(0);
             }
-            if(gamepad2.dpad_left){
-                svoWobble.setPosition(wobbleHold);
-            }
             if(gamepad2.dpad_right){
+                svoForkHold.setPosition(forkHold);
+            }
+            if(gamepad2.dpad_left){
+                svoForkHold.setPosition(forkRelease);
+            }
+
+            if(gamepad2.left_bumper){
                 svoWobble.setPosition(wobbleRelease);
             }
 
             telemetry.addData("Status", " Run Time: " + runtime.toString());
             telemetry.addData("Timer Status", " Time: " + timer.toString());
+            telemetry.addData("backwardsMode status:", " " + backwardsMode);
+            telemetry.addData("slowMode status:", " " + slowMode);
             telemetry.update();
         }
 

@@ -53,7 +53,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
 
     //motors
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
-    Servo svoWobble, svoMagLift, svoRingPush;
+    Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
     State currentState;
 
@@ -65,8 +65,10 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
-    double wobbleRelease = 0.48;
-    double wobbleHold = 0.1;
+    double wobbleRelease = 0.37;
+    double wobbleHold = 0.2;
+    double forkHold = 0.8;
+    double forkRelease = 0.7;
 
     public static class var{
         private static int RingStackIndentified = 0;
@@ -83,7 +85,8 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         DETECT_RING_STACK,
         NO_RINGS,
         ONE_RING,
-        FOUR_RINGS
+        FOUR_RINGS,
+        STOP
     }
 
     @Override
@@ -132,17 +135,25 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
             svoWobble = hardwareMap.get(Servo.class,"svoWobble");
             svoWobble.setDirection(Servo.Direction.FORWARD);
 
+            svoForkHold = hardwareMap.get(Servo.class,"svoForkHold");
+            svoForkHold.setDirection(Servo.Direction.FORWARD);
+
             telemetry.addData("Status", "Initialized");
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Analysis", pipeline.getAnalysis());
             telemetry.addData("Position", pipeline.position);
             telemetry.update();
 
+            svoForkHold.setPosition(forkHold);
+            svoWobble.setPosition(wobbleHold);
+            svoRingPush.setPosition(ringPushIn);
+            svoMagLift.setPosition(magDown);
 
             waitForStart();
             currentState = State.DETECT_RING_STACK;
 
             while (opModeIsActive()) {
+
 
                 if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE)) {
                     telemetry.addLine("Zone A, no rings");
@@ -173,13 +184,18 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                         telemetry.addLine("Zone A, no rings");
                         telemetry.update();
                         //forward to shooting pos whereever the donde that is lol and shoot shoot
-                        encoderForward(0,0);
-                        shootThree(1);
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.2,15);
+                        encoderStrafe(0.3,16);
+                        svoMagLift.setPosition(magUp);
+                        shootThree(0.6);
+                        svoMagLift.setPosition(magDown);
 
                         // nav to zone a
-                        encoderForward(0,0);
-                        encoderStrafe(0,0);
-
+                        encoderStrafe(0.4,32);
+                        encoderForward(0.4,8);
+                        svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
                         //back up to second wobble (no rings so navigate however)
 
                         //180 spin spin
@@ -187,16 +203,28 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                         //drop it like its hot
 
                         //park
-
+                        encoderForward(-0.4,-6);
+                        encoderStrafe(-0.4,-28);
+                        encoderForward(0.6,19);
+                        currentState = State.STOP;
 
                         break;
                     case ONE_RING:
                         telemetry.addLine("Zone B, one ring");
                         telemetry.update();
                         //forward to shooting pos donde estas and brrrr
-                        encoderForward(0,0);
-                        shootThree(1);
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.2,15);
+                        encoderStrafe(0.2,16);
+                        svoMagLift.setPosition(magUp);
+                        shootThree(0.6);
+                        svoMagLift.setPosition(magDown);
+
                         //nav to zone b and rain drop drop top
+                        encoderStrafe(0.2,4);
+                        encoderForward(0.6,21);
+                        svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
 
                         //back up to second wobble
 
@@ -207,15 +235,26 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                         //drip drop
 
                         //park
-
+                        encoderForward(-0.6,-5);
+                        currentState = State.STOP;
                         break;
                     case FOUR_RINGS:
                         telemetry.addLine("Zone C, four rings");
                         telemetry.update();
                         //forward to shooter babey skrrrAH
-                        encoderForward(0,0);
-                        shootThree(1);
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.2,15);
+                        encoderStrafe(0.2,16);
+                        svoMagLift.setPosition(magUp);
+                        shootThree(0.6);
+                        svoMagLift.setPosition(magDown);
+
                         //nav to zone c lol
+                        encoderStrafe(0.3,32);
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.6,6);
+                        svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
 
                         //then back that ass straight tf up along the wall then strafe at the right point to pick up wobble dos
 
@@ -224,6 +263,12 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                         //zone c again
 
                         //park
+                        encoderForward(-0.6,-35);
+                        currentState = State.STOP;
+                        break;
+                    case STOP:
+                        brakeMotors();
+
                         break;
                 }
 
@@ -247,7 +292,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         static final Scalar BLUE = new Scalar(0, 0, 255, 255);
         static final Scalar GREEN = new Scalar(0, 255, 0, 255);
 
-        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(181,98);
+        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(200,118);
 
         static final int REGION_WIDTH = 25;
         static final int REGION_HEIGHT = 35;
@@ -338,7 +383,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     }
     private void shootThree(double inBetweenRingTime){
         mtrFlywheel.setPower(1);
-        waitFor(1.5);
+        waitFor(1);
         pushARing();
         waitFor(inBetweenRingTime);
         pushARing();
@@ -402,6 +447,14 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         forward(power);
         mtrFRisBusy();
         brakeMotors();
+        runWithoutEncoder();
+    }
+    private void encoderForwardNoBrake(double power, int distance_inches){
+        resetEncoders();
+        forwardPosition(-distance_inches);
+        runToPosition();
+        forward(power);
+        mtrFRisBusy();
         runWithoutEncoder();
     }
 
