@@ -204,6 +204,7 @@ public class teleop_control_normal extends LinearOpMode{
             telemetry.addData("Timer Status", " Time: " + timer.toString());
             telemetry.addData("backwardsMode status:", " " + backwardsMode);
             telemetry.addData("slowMode status:", " " + slowMode);
+            telemetry.addData("forkHeld status:", " " + forkHeld);
             telemetry.update();
         }
 
