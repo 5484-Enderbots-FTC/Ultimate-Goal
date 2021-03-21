@@ -42,7 +42,7 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-@Autonomous(name = "wobble + shoot + park FSM", group = "auto")
+@Autonomous(name = "wobble shoot park FSM", group = "auto")
 public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();

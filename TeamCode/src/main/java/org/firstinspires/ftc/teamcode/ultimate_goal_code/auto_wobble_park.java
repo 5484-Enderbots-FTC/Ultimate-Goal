@@ -21,6 +21,7 @@
 
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -42,6 +43,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 @Autonomous(name = "wobble park", group = "auto")
+@Disabled
 public class auto_wobble_park extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 

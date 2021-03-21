@@ -22,7 +22,6 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -41,10 +40,10 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-@Autonomous(name = "wobble shoot park", group = "auto")
-@Disabled
-public class auto_wobble_shoot_park extends LinearOpMode {
+@Autonomous(name = "wobble shoot park w gyro", group = "auto")
+public class auto_gyro_wobble_shoot_park_FSM extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
+    ElapsedTime timer = new ElapsedTime();
 
     //OpenCV stuff
     OpenCvCamera webcam;
@@ -52,23 +51,22 @@ public class auto_wobble_shoot_park extends LinearOpMode {
 
     //motors
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
-    Servo svoWobble, svoMagLift, svoRingPush;
+    Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
+    State currentState;
+
+    
     //constants
-    private final double ticksPerMm = 1.68240559922;
-    private final double ticksPerInchCalibratedOld = 1.518268;
     private final double ticksPerInchCalibrated = 43.3305;
 
-    /*
-    calibraition time:
-    told it to go 3ft, it went 1.25ft (15in)
-    the current ticks per mm is 1.518
-    1.25ft -> 381mm
-    3ft    -> 914mm
-    914/381 = 2.3 ish
-    old calibration * 2.3 = 3.6422
-
-     */
+    double magDown = 0.85;
+    double magUp = 0.58;
+    double ringPushOut = 0.6;
+    double ringPushIn = 0.75;
+    double wobbleRelease = 0.37;
+    double wobbleHold = 0.2;
+    double forkHold = 0.8;
+    double forkRelease = 0.7;
 
     public static class var{
         private static int RingStackIndentified = 0;
@@ -79,12 +77,18 @@ public class auto_wobble_shoot_park extends LinearOpMode {
         B,
         C
     }
-
     Zone targetZone = Zone.A;
+
+    public enum State{
+        DETECT_RING_STACK,
+        NO_RINGS,
+        ONE_RING,
+        FOUR_RINGS,
+        STOP
+    }
 
     @Override
     public void runOpMode() {
-
 
             //openCV config
             int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -92,12 +96,7 @@ public class auto_wobble_shoot_park extends LinearOpMode {
             pipeline = new RingStackDeterminationPipeline();
             webcam.setPipeline(pipeline);
 
-            webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
-                                             @Override
-                                             public void onOpened() {
-                                                 webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
-                                             }
-                                         }
+            webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
             );
             //motors
             mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
@@ -133,100 +132,147 @@ public class auto_wobble_shoot_park extends LinearOpMode {
             svoWobble = hardwareMap.get(Servo.class,"svoWobble");
             svoWobble.setDirection(Servo.Direction.FORWARD);
 
+            svoForkHold = hardwareMap.get(Servo.class,"svoForkHold");
+            svoForkHold.setDirection(Servo.Direction.FORWARD);
+
             telemetry.addData("Status", "Initialized");
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Analysis", pipeline.getAnalysis());
             telemetry.addData("Position", pipeline.position);
             telemetry.update();
 
+            svoForkHold.setPosition(forkHold);
+            svoWobble.setPosition(wobbleHold);
+            svoRingPush.setPosition(ringPushIn);
+            svoMagLift.setPosition(magDown);
 
             waitForStart();
-            if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
-                targetZone = Zone.A;
-                telemetry.addLine("Zone A, no rings");
+            currentState = State.DETECT_RING_STACK;
+
+            while (opModeIsActive()) {
+
+
+                if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE)) {
+                    telemetry.addLine("Zone A, no rings");
+                    telemetry.update();
+                } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE)) {
+                    telemetry.addLine("Zone B, one ring");
+                    telemetry.update();
+                } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR)) {
+                    telemetry.addLine("Zone C, four rings");
+                    telemetry.update();
+                }
+
+                switch (currentState) {
+
+                    case DETECT_RING_STACK:
+                        if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
+                            targetZone = Zone.A;
+                            currentState = State.NO_RINGS;
+                        } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
+                            targetZone = Zone.B;
+                            currentState = State.ONE_RING;
+                        } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
+                            targetZone = Zone.C;
+                            currentState = State.FOUR_RINGS;
+                        }
+                        break;
+                    case NO_RINGS:
+                        telemetry.addLine("Zone A, no rings");
+                        telemetry.update();
+                        //forward to shooting pos whereever the donde that is lol and shoot shoot
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.2,15);
+                        encoderStrafe(0.3,16);
+                        svoMagLift.setPosition(magUp);
+                        shootThree(0.6);
+                        svoMagLift.setPosition(magDown);
+
+                        // nav to zone a
+                        encoderStrafe(0.4,32);
+                        encoderForward(0.4,8);
+                        svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
+                        //back up to second wobble (no rings so navigate however)
+
+                        //180 spin spin
+
+                        //drop it like its hot
+
+                        //park
+                        encoderForward(-0.4,-6);
+                        encoderStrafe(-0.4,-28);
+                        encoderForward(0.6,19);
+                        currentState = State.STOP;
+
+                        break;
+                    case ONE_RING:
+                        telemetry.addLine("Zone B, one ring");
+                        telemetry.update();
+                        //forward to shooting pos donde estas and brrrr
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.2,15);
+                        encoderStrafe(0.2,16);
+                        svoMagLift.setPosition(magUp);
+                        shootThree(0.6);
+                        svoMagLift.setPosition(magDown);
+
+                        //nav to zone b and rain drop drop top
+                        encoderStrafe(0.2,4);
+                        encoderForward(0.6,21);
+                        svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
+
+                        //back up to second wobble
+
+                        //scooch over and forward to the single ring and turn on the intake and yOink
+
+                        //tHEn 180 woosh
+
+                        //drip drop
+
+                        //park
+                        encoderForward(-0.6,-5);
+                        currentState = State.STOP;
+                        break;
+                    case FOUR_RINGS:
+                        telemetry.addLine("Zone C, four rings");
+                        telemetry.update();
+                        //forward to shooter babey skrrrAH
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.2,15);
+                        encoderStrafe(0.2,16);
+                        svoMagLift.setPosition(magUp);
+                        shootThree(0.6);
+                        svoMagLift.setPosition(magDown);
+
+                        //nav to zone c lol
+                        encoderStrafe(0.3,32);
+                        encoderForwardNoBrake(0.6,46);
+                        encoderForward(0.6,6);
+                        svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
+
+                        //then back that ass straight tf up along the wall then strafe at the right point to pick up wobble dos
+
+                        //180 babey
+
+                        //zone c again
+
+                        //park
+                        encoderForward(-0.6,-35);
+                        currentState = State.STOP;
+                        break;
+                    case STOP:
+                        brakeMotors();
+
+                        break;
+                }
+
                 telemetry.addData("Analysis", pipeline.getAnalysis());
+                telemetry.addData("Position", pipeline.position);
                 telemetry.update();
-
-            /*
-            Pathing:
-            Straight right to wall basically
-            Forward
-            Spit out wobble goal
-            Back up for park
-            dOnE
-             */
-                mtrFlywheel.setPower(1);
-
-                //strafe to right wall
-                encoderStrafe(0.8, 630);
-                //to zone a
-                encoderForward(0.6, 930);
-                //wait a hot sec cuz momentum makes wobble goal w o b b l e
-                waitFor(0.5);
-                //spit
-
-
-                //strafe left a bit
-                encoderStrafe(-0.5, -400); //457mm per 1.5ft
-                //park
-                encoderForward(0.8, 150); //152 per 0.5ftc
-
-
-            } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
-                targetZone = Zone.B;
-                telemetry.addLine("Zone B, one ring");
-                telemetry.addData("Analysis", pipeline.getAnalysis());
-                telemetry.update();
-            /*
-            Pathing:
-            Forward a bunch
-            Strafe right a bit
-            Spit out wobble goal
-            Back up for park
-            dOnE
-             */
-                //to zone b
-                encoderForward(0.8, 1250); //2438mm per 8ft
-                //strafe to right a bit
-                encoderStrafe(0.4, 260); //152 per 0.5ftc
-                //wait a hot sec cuz momentum makes wobble goal w o b b l e
-                waitFor(0.5);
-                //spit
-
-                //back up park
-                encoderForward(-0.8, -220); //152 per 0.5ftc
-
-            } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
-                targetZone = Zone.C;
-                telemetry.addLine("Zone C, four rings");
-                telemetry.addData("Analysis", pipeline.getAnalysis());
-                telemetry.update();
-            /*
-            Pathing:
-            Straight right to wall basically
-            Forward (but more than zone A)
-            Spit out wobble goal
-            Back up for park
-            dOnE
-             */
-
-                //strafe to right wall
-                encoderStrafe(0.8, 630); //914mm per 3ft
-                //to zone a
-                encoderForward(0.8, 1570); //3048mm per 10ft
-                //wait a hot sec cuz momentum makes wobble goal w o b b l e
-                waitFor(0.5);
-                //spit
-
-                //back up park
-                encoderForward(-0.8, -420); //457mm per 1.5ftc
-
             }
-
-            telemetry.addData("Analysis", pipeline.getAnalysis());
-            telemetry.addData("Position", pipeline.position);
-            telemetry.update();
-
     }
 
 
@@ -243,13 +289,13 @@ public class auto_wobble_shoot_park extends LinearOpMode {
         static final Scalar BLUE = new Scalar(0, 0, 255, 255);
         static final Scalar GREEN = new Scalar(0, 255, 0, 255);
 
-        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(181,98);
+        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(200,118);
 
         static final int REGION_WIDTH = 25;
-        static final int REGION_HEIGHT = 25;
+        static final int REGION_HEIGHT = 35;
 
-        final int FOUR_RING_THRESHOLD = 185;
-        final int ONE_RING_THRESHOLD = 150;
+        final int FOUR_RING_THRESHOLD = 150;
+        final int ONE_RING_THRESHOLD = 135;
 
         Point region1_pointA = new Point(
                 REGION1_TOPLEFT_ANCHOR_POINT.x,
@@ -321,12 +367,28 @@ public class auto_wobble_shoot_park extends LinearOpMode {
             return avg1;
         }
     }
-
     private void waitFor(double waittime) {
-        runtime.reset();
-        while (runtime.seconds() < waittime) {
-            //don't do anything pls
+        timer.reset();
+        while (timer.seconds() < waittime) {
         }
+    }
+
+    private void pushARing(){
+        svoRingPush.setPosition(ringPushOut);
+        waitFor(0.5);
+        svoRingPush.setPosition(ringPushIn);
+    }
+    private void shootThree(double inBetweenRingTime){
+        mtrFlywheel.setPower(0.7);
+        waitFor(1);
+        pushARing();
+        waitFor(inBetweenRingTime);
+        pushARing();
+        waitFor(inBetweenRingTime);
+        pushARing();
+        waitFor(inBetweenRingTime);
+        mtrFlywheel.setPower(0);
+        
     }
     private void resetEncoders() {
         mtrFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -350,12 +412,17 @@ public class auto_wobble_shoot_park extends LinearOpMode {
         while (mtrFR.isBusy()){
         }
     }
+    private void mtrBLisBusy() {
+        while (mtrBL.isBusy()){
+        }
+    }
     private void runWithoutEncoder() {
         mtrFR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrBR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
+
     private void forward(double power) {
         mtrBL.setPower(power);
         mtrBR.setPower(power);
@@ -379,6 +446,15 @@ public class auto_wobble_shoot_park extends LinearOpMode {
         brakeMotors();
         runWithoutEncoder();
     }
+    private void encoderForwardNoBrake(double power, int distance_inches){
+        resetEncoders();
+        forwardPosition(-distance_inches);
+        runToPosition();
+        forward(power);
+        mtrFRisBusy();
+        runWithoutEncoder();
+    }
+
     private void strafe(double power) {
         mtrBL.setPower(power);
         mtrBR.setPower(-power);

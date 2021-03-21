@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop control swap",group="teleop")
+@TeleOp(name="teleop control swap",group="1-teleop")
 public class teleop_control_swap extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();

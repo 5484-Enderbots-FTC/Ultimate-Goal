@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop solo",group="teleop")
+@TeleOp(name="teleop solo",group="1-teleop")
 public class teleop_one_controller extends LinearOpMode{
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();

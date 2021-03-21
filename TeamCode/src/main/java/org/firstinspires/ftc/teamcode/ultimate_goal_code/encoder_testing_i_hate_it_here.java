@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.openftc.easyopencv.OpenCvCamera;
 
 @Autonomous(name = "encoder test cri", group = "auto")
+@Disabled
 public class encoder_testing_i_hate_it_here extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();

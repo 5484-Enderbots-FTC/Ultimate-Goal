@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="double_flywheel",group="testing")
+@Disabled
 public class double_flywheel extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();
