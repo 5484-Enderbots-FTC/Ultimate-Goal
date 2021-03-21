@@ -34,6 +34,7 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -55,7 +56,7 @@ import java.util.Locale;
  * @see <a href="http://www.adafruit.com/products/2472">Adafruit IMU</a>
  */
 @TeleOp(name = "Sensor: BNO055 IMU", group = "Sensor")
-@Disabled                            // Comment this out to add to the opmode list
+//@Disabled                            // Comment this out to add to the opmode list
 public class SensorBNO055IMU extends LinearOpMode
     {
     //----------------------------------------------------------------------------------------------
@@ -63,6 +64,7 @@ public class SensorBNO055IMU extends LinearOpMode
     //----------------------------------------------------------------------------------------------
 
     // The IMU sensor object
+    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR;
     BNO055IMU imu;
 
     // State used for updating telemetry
@@ -85,6 +87,22 @@ public class SensorBNO055IMU extends LinearOpMode
         parameters.loggingEnabled      = true;
         parameters.loggingTag          = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
+        mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
+
+        mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
+        mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
+
+        mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
+        mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
+
+        mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
+        mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",

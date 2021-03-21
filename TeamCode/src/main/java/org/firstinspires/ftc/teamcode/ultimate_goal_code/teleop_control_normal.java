@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -15,6 +16,8 @@ public class teleop_control_normal extends LinearOpMode{
 
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
+
+    BNO055IMU imu;
 
     /***
 
@@ -37,6 +40,7 @@ public class teleop_control_normal extends LinearOpMode{
     boolean backwardsMode = false;
     boolean slowMode = false;
     boolean forkHeld = true;
+    boolean ringSwiped = false;
 
     public void runOpMode() {
 
@@ -99,38 +103,46 @@ public class teleop_control_normal extends LinearOpMode{
              */
 
             if(gamepad1.right_bumper && (backwardsMode == false)){
+                //activate backwards mode
                 backwardsMode = true;
             }
             else if(gamepad1.right_bumper && (backwardsMode == true)){
+                //deactivate backwards mode
                 backwardsMode = false;
             }
 
             if(gamepad1.left_bumper && (slowMode == false)){
+                //activate slow mode
                 slowMode = true;
             }
             else if(gamepad1.left_bumper && (slowMode == true)){
+                //deactivate slow mode
                 slowMode = false;
             }
 
             if((backwardsMode == false) && (slowMode == false)) {
+                //default controls
                 mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
                 mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
                 mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
                 mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
             }
             if((backwardsMode == true) && (slowMode == false)){
+                //backwards mode only
                 mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
                 mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
                 mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
                 mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
             }
             if((backwardsMode == false) && (slowMode == true)){
+                //slow mode only
                 mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
                 mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
                 mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
                 mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
             }
             if((backwardsMode == true) && (slowMode == true)){
+                //backwards and slow modes together
                 mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
                 mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
                 mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
@@ -163,8 +175,13 @@ public class teleop_control_normal extends LinearOpMode{
                     svoRingPush.setPosition(ringPushIn);
                 }
             }
-            if (gamepad2.y){
+            if (gamepad2.y && (ringSwiped == false)){
                 svoRingPush.setPosition(ringJamnt);
+                ringSwiped = true;
+            }
+            if (gamepad2.y && (ringSwiped == true)){
+                svoRingPush.setPosition(ringPushIn);
+                ringSwiped = true;
             }
 
             if(gamepad2.dpad_up){
