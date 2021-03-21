@@ -93,8 +93,12 @@ public class auto_wobble_park extends LinearOpMode {
             pipeline = new RingStackDeterminationPipeline();
             webcam.setPipeline(pipeline);
 
-            webcam.openCameraDeviceAsync(() ->
-                    webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
+            webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+                                             @Override
+                                             public void onOpened() {
+                                                 webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                                             }
+                                         }
             );
             //motors
             mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");

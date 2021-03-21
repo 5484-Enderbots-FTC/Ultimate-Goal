@@ -51,8 +51,12 @@ public class OpenCV_with_live extends LinearOpMode {
         pipeline = new RingStackDeterminationPipeline();
         webcam.setPipeline(pipeline);
 
-        webcam.openCameraDeviceAsync(() ->
-                webcam.startStreaming(320,240, OpenCvCameraRotation.UPRIGHT)
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+                                         @Override
+                                         public void onOpened() {
+                                             webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                                         }
+                                     }
         );
         waitForStart();
 

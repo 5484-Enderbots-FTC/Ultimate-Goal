@@ -98,8 +98,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
             pipeline = new RingStackDeterminationPipeline();
             webcam.setPipeline(pipeline);
 
-            webcam.openCameraDeviceAsync(() ->
-                    webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
+            webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
             );
             //motors
             mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");

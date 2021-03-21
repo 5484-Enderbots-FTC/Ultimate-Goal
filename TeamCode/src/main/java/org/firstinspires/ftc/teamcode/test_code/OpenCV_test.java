@@ -52,8 +52,11 @@ public class OpenCV_test extends LinearOpMode {
 
         webcam = OpenCvCameraFactory.getInstance().createWebcam(webcamName);
         webcam.setPipeline(pipeline);
-        webcam.openCameraDeviceAsync(() -> {
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            @Override
+            public void onOpened() {
 
+            }
         });
 
 
