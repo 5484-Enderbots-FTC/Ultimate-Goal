@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -7,6 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="teleop control swap",group="1-teleop")
+@Disabled
 public class teleop_control_swap extends LinearOpMode{
 
     ElapsedTime runtime = new ElapsedTime();

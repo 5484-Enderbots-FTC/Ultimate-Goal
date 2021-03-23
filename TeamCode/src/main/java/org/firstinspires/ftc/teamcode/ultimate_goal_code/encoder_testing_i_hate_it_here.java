@@ -24,9 +24,6 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush;
 
-    auto_wobble_shoot_park_FSM.State currentState;
-
-
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
 

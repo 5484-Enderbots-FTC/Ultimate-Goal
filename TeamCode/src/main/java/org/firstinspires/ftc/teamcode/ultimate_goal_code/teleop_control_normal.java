@@ -64,14 +64,12 @@ public class teleop_control_normal extends LinearOpMode{
         parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json";
+        parameters.calibrationDataFile = "AdafruitIMUCalibration.json";
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
         imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-
         imu.initialize(parameters);
 
         telemetry.addData("Mode", "calibrating...");
@@ -190,8 +188,6 @@ public class teleop_control_normal extends LinearOpMode{
                 mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
             }
 
-
-
             if (gamepad1.a){
                 mtrIntake.setPower(1);
             }
@@ -222,7 +218,7 @@ public class teleop_control_normal extends LinearOpMode{
             }
             if (gamepad2.y && (ringSwiped == true)){
                 svoRingPush.setPosition(ringPushIn);
-                ringSwiped = true;
+                ringSwiped = false;
             }
 
             if(gamepad2.dpad_up){
@@ -364,19 +360,24 @@ public class teleop_control_normal extends LinearOpMode{
         else return;
 
         // set power to rotate.
-        //leftMotor.setPower(leftPower);
-        //rightMotor.setPower(rightPower);
+        mtrFL.setPower(leftPower);
+        mtrBL.setPower(leftPower);
+        mtrBR.setPower(rightPower);
+        mtrFR.setPower(rightPower);
 
         // rotate until turn is completed.
         if (degrees < 0)
         {
             // On right turn we have to get off zero first.
-            while (opModeIsActive() && getAngle() == 0) {}
+            while (opModeIsActive() && getAngle() == 0) {
+            }
 
-            while (opModeIsActive() && getAngle() > degrees) {}
+            while (opModeIsActive() && getAngle() > degrees) {
+            }
         }
         else    // left turn.
-            while (opModeIsActive() && getAngle() < degrees) {}
+            while (opModeIsActive() && getAngle() < degrees) {
+            }
 
         // turn the motors off.
         mtrBL.setPower(0);
