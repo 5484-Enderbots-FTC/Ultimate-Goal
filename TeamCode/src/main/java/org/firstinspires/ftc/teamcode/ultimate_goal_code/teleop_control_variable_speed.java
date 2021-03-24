@@ -4,23 +4,18 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
-@TeleOp(name="teleop normal",group="1-teleop")
-public class teleop_control_normal extends LinearOpMode{
+@TeleOp(name="teleop variable speed",group="1-teleop")
+public class teleop_control_variable_speed extends LinearOpMode{
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
 
@@ -40,7 +35,8 @@ public class teleop_control_normal extends LinearOpMode{
 
      */
 
-    double flywheelPower = 0.65;
+    final double flywheelPower = 0.65;
+    double variableFlywheelPower = 0.65;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
@@ -197,8 +193,19 @@ public class teleop_control_normal extends LinearOpMode{
             if (gamepad1.x){
                 mtrIntake.setPower(-1);
             }
-            if (gamepad1.y){
-                mtrFlywheel.setPower(0.55);
+            if(gamepad1.y){
+                //reset
+                mtrFlywheel.setPower(flywheelPower);
+                variableFlywheelPower = flywheelPower;
+            }
+
+            if(gamepad1.dpad_down){
+                //decrease
+                mtrFlywheel.setPower(variableFlywheelPower-0.05);
+            }
+            if(gamepad1.dpad_up){
+                //increase
+                mtrFlywheel.setPower(variableFlywheelPower+0.05);
             }
 
             /**
@@ -258,6 +265,7 @@ public class teleop_control_normal extends LinearOpMode{
 
             telemetry.addData("Status", " Run Time: " + runtime.toString());
             telemetry.addData("Timer Status", " Time: " + timer.toString());
+            telemetry.addData("variable speed current speed:", variableFlywheelPower);
             telemetry.addData("backwardsMode status:", " " + backwardsMode);
             telemetry.addData("slowMode status:", " " + slowMode);
             telemetry.addData("forkHeld status:", " " + forkHeld);
