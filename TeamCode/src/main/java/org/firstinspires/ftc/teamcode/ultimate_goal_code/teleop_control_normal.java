@@ -23,6 +23,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 public class teleop_control_normal extends LinearOpMode{
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
+    ElapsedTime toggleTimerS = new ElapsedTime();
+    ElapsedTime toggleTimerB = new ElapsedTime();
+    ElapsedTime toggleTimerF = new ElapsedTime();
+    ElapsedTime toggleTimerR = new ElapsedTime();
 
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
@@ -41,6 +45,7 @@ public class teleop_control_normal extends LinearOpMode{
      */
 
     double flywheelPower = 0.65;
+    double lessFlywheelPower = 0.55;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
@@ -50,6 +55,7 @@ public class teleop_control_normal extends LinearOpMode{
     double wobbleHold = 0.2;
     double forkHold = 0.8;
     double forkRelease = 0.7;
+    double toggleWaitTime = 0.5;
 
     boolean magIsUp = false;
     boolean backwardsMode = false;
@@ -141,22 +147,26 @@ public class teleop_control_normal extends LinearOpMode{
              * Gamepad 1 Controls
              */
 
-            if(gamepad1.right_bumper && (backwardsMode == false)){
+            if(gamepad1.right_bumper && (backwardsMode == false) && (toggleTimerB.seconds() > toggleWaitTime)){
                 //activate backwards mode
                 backwardsMode = true;
+                toggleTimerB.reset();
             }
-            else if(gamepad1.right_bumper && (backwardsMode == true)){
+            else if(gamepad1.right_bumper && (backwardsMode == true) && (toggleTimerB.seconds() > toggleWaitTime)){
                 //deactivate backwards mode
                 backwardsMode = false;
+                toggleTimerB.reset();
             }
 
-            if(gamepad1.left_bumper && (slowMode == false)){
+            if(gamepad1.left_bumper && (slowMode == false) && (toggleTimerS.seconds() > toggleWaitTime)){
                 //activate slow mode
                 slowMode = true;
+                toggleTimerS.reset();
             }
-            else if(gamepad1.left_bumper && (slowMode == true)){
+            else if(gamepad1.left_bumper && (slowMode == true) && (toggleTimerS.seconds() > toggleWaitTime)){
                 //deactivate slow mode
                 slowMode = false;
+                toggleTimerS.reset();
             }
 
             if((backwardsMode == false) && (slowMode == false)) {
@@ -215,6 +225,12 @@ public class teleop_control_normal extends LinearOpMode{
                     svoRingPush.setPosition(ringPushIn);
                 }
             }
+            if(gamepad2.right_trigger > 0.1){
+                svoRingPush.setPosition(ringJamnt);
+                waitFor(0.5);
+                svoRingPush.setPosition(ringPushIn);
+            }
+            /*
             if (gamepad2.y && (ringSwiped == false)){
                 svoRingPush.setPosition(ringJamnt);
                 ringSwiped = true;
@@ -223,6 +239,7 @@ public class teleop_control_normal extends LinearOpMode{
                 svoRingPush.setPosition(ringPushIn);
                 ringSwiped = false;
             }
+             */
 
             if(gamepad2.dpad_up){
                 svoMagLift.setPosition(magUp);
@@ -243,13 +260,15 @@ public class teleop_control_normal extends LinearOpMode{
                 mtrFlywheel.setPower(0);
             }
 
-            if(gamepad2.left_bumper && (forkHeld == false)){
+            if(gamepad2.left_bumper && (forkHeld == false) && (toggleTimerF.seconds() > toggleWaitTime)){
                 svoForkHold.setPosition(forkHold);
                 forkHeld = true;
+                toggleTimerF.reset();
             }
-            else if(gamepad2.left_bumper && (forkHeld == true)){
+            else if(gamepad2.left_bumper && (forkHeld == true) && (toggleTimerF.seconds() > toggleWaitTime)){
                 svoForkHold.setPosition(forkRelease);
                 forkHeld = false;
+                toggleTimerF.reset();
             }
 
             /**
@@ -258,9 +277,8 @@ public class teleop_control_normal extends LinearOpMode{
 
             telemetry.addData("Status", " Run Time: " + runtime.toString());
             telemetry.addData("Timer Status", " Time: " + timer.toString());
-            telemetry.addData("backwardsMode status:", " " + backwardsMode);
-            telemetry.addData("slowMode status:", " " + slowMode);
-            telemetry.addData("forkHeld status:", " " + forkHeld);
+            telemetry.addData("backwards timer sec:", " " + toggleTimerB.seconds());
+            telemetry.addData("slow timer sec:", " " + toggleTimerS.seconds());
             telemetry.update();
         }
 
@@ -276,6 +294,7 @@ public class teleop_control_normal extends LinearOpMode{
             mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
         }
     }
+
     /**
      * Resets the cumulative angle tracking to zero.
      */
