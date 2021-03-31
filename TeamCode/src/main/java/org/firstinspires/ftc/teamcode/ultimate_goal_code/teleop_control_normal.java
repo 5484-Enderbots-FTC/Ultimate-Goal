@@ -44,7 +44,7 @@ public class teleop_control_normal extends LinearOpMode{
 
      */
 
-    double flywheelPower = 0.65;
+    double flywheelPower = 0.63;
     double lessFlywheelPower = 0.55;
     double magDown = 0.85;
     double magUp = 0.58;
@@ -140,6 +140,9 @@ public class teleop_control_normal extends LinearOpMode{
         waitForStart();
         runtime.reset();
         timer.reset();
+        toggleTimerB.reset();
+        toggleTimerS.reset();
+        toggleTimerF.reset();
 
         while (!isStopRequested() && opModeIsActive()) {
 
@@ -207,9 +210,7 @@ public class teleop_control_normal extends LinearOpMode{
             if (gamepad1.x){
                 mtrIntake.setPower(-1);
             }
-            if (gamepad1.y){
-                mtrFlywheel.setPower(0.55);
-            }
+
 
             /**
              * Gamepad 2 Controls
@@ -230,6 +231,11 @@ public class teleop_control_normal extends LinearOpMode{
                 waitFor(0.5);
                 svoRingPush.setPosition(ringPushIn);
             }
+
+            if (gamepad2.y){
+                mtrFlywheel.setPower(lessFlywheelPower);
+            }
+
             /*
             if (gamepad2.y && (ringSwiped == false)){
                 svoRingPush.setPosition(ringJamnt);
