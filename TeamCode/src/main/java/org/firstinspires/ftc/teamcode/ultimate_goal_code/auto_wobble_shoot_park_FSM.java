@@ -69,7 +69,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     double wobbleHold = 0.2;
     double forkHold = 0.8;
     double forkRelease = 0.7;
-    double flywheelPower = 0.62;
+    double flywheelPower = 0.614;
 
     public static class var{
         private static int RingStackIndentified = 0;
