@@ -11,14 +11,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.openftc.easyopencv.OpenCvCamera;
 
 @Autonomous(name = "encoder test cri", group = "auto")
-@Disabled
 public class encoder_testing_i_hate_it_here extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
-
-    //OpenCV stuff
-    OpenCvCamera webcam;
-    auto_wobble_shoot_park_FSM.RingStackDeterminationPipeline pipeline;
 
     //motors
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
@@ -27,7 +22,10 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
 
-    private final double ticksPerInchWobbleLift = 43.3305;
+    private final double ticksPerInchWobbleLift = 1.546;
+    //now in mm!
+
+    //wheel*pi*encoderticks = 3621.99
 
     double magDown = 0.85;
     double magUp = 0.58;
@@ -65,7 +63,7 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
 
         mtrWobble = hardwareMap.get(DcMotorEx.class, "mtrWobble");
         mtrWobble.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrWobble.setDirection(DcMotorEx.Direction.FORWARD);
+        mtrWobble.setDirection(DcMotorEx.Direction.REVERSE);
 
         svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
         svoMagLift.setDirection(Servo.Direction.FORWARD);
@@ -89,13 +87,22 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
             //what the tick value was: 91.44
             //what i changed it to: 43.0305
 
-        encoderLiftUp(0.5,5);
+        //encoderLiftUp(0.4,25);
+        liftUp(0.5,0.4);
+        waitFor(2);
+        liftUp(-0.5, 0.4);
 
-        
+
     }
     private void waitFor(double waittime) {
         timer.reset();
         while (timer.seconds() < waittime) {
+        }
+    }
+    private void liftUp (double power, double seconds){
+        timer.reset();
+        while (timer.seconds() < seconds) {
+            mtrWobble.setPower(power);
         }
     }
 
@@ -121,21 +128,21 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
         mtrFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mtrBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mtrBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        mtrWobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
     }
     private void runToPosition() {
         mtrFR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrFL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrBR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        mtrWobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
     }
     private void brakeMotors() {
         mtrFL.setPower(0);
         mtrFR.setPower(0);
         mtrBL.setPower(0);
         mtrBR.setPower(0);
-        mtrWobble.setPower(0);
+
     }
     private void mtrFRisBusy() {
         while (mtrFR.isBusy()){
@@ -154,7 +161,7 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
         mtrFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrBR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        mtrWobble.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
     }
 
     private void forward(double power) {
@@ -204,19 +211,20 @@ public class encoder_testing_i_hate_it_here extends LinearOpMode {
     }
 
     private void liftUp(double power){
-        mtrWobble.setPower(power);
+
     }
     private void liftUpPosition(int distance_inches){
-        mtrWobble.setTargetPosition(distance_inches*(int)ticksPerInchWobbleLift);
+
     }
     private void encoderLiftUp(double power, int distance_inches){
-        resetEncoders();
-        liftUpPosition(distance_inches);
-        runToPosition();
-        liftUp(power);
+        mtrWobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mtrWobble.setTargetPosition(6);
+        // mtrWobble.setTargetPosition(distance_inches*(int)ticksPerInchWobbleLift);
+        mtrWobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        mtrWobble.setPower(power);
         mtrWobbleisBusy();
-        brakeMotors();
-        runWithoutEncoder();
+        mtrWobble.setPower(0);
+        mtrWobble.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
 
