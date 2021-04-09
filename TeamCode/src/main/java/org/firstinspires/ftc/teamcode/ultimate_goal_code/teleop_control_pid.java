@@ -1,26 +1,23 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode.test_code.TuningController;
 
-@TeleOp(name="teleop normal",group="1-teleop")
-public class teleop_control_normal extends LinearOpMode{
+@TeleOp(name="teleop w/ PID",group="testing")
+public class teleop_control_pid extends LinearOpMode{
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
     ElapsedTime toggleTimerS = new ElapsedTime();
@@ -28,9 +25,14 @@ public class teleop_control_normal extends LinearOpMode{
     ElapsedTime toggleTimerF = new ElapsedTime();
     ElapsedTime toggleTimerR = new ElapsedTime();
 
+    FtcDashboard dashboard = FtcDashboard.getInstance();
+    
+    VoltageSensor batteryVoltageSensor;
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(0, 0, 0, 0);
+    
     BNO055IMU imu;
 
     /***
@@ -60,19 +62,25 @@ public class teleop_control_normal extends LinearOpMode{
 
     public void runOpMode() {
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
 
-        parameters.mode = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "AdafruitIMUCalibration.json";
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        telemetry.addData("Mode", "calibrating...");
-        telemetry.update();
 
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+        setPIDFCoefficients(mtrFlywheel, MOTOR_VELO_PID);
+
+        TuningController tuningController = new TuningController();
+
+        double lastKp = 0.0;
+        double lastKi = 0.0;
+        double lastKd = 0.0;
+        double lastKf = getMotorVelocityF();
+
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
+        //Drivetrain motors
         mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
         mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
@@ -89,6 +97,7 @@ public class teleop_control_normal extends LinearOpMode{
         mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
 
+        //Intake & Wobble lift
         mtrIntake = hardwareMap.get(DcMotorEx.class, "mtrIntake");
         mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         mtrIntake.setDirection(DcMotorEx.Direction.REVERSE);
@@ -97,10 +106,17 @@ public class teleop_control_normal extends LinearOpMode{
         mtrWobble.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         mtrWobble.setDirection(DcMotorEx.Direction.FORWARD);
 
+        //Flywheel motors
         mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
         mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
+        MotorConfigurationType motorConfigurationType = mtrFlywheel.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        mtrFlywheel.setMotorType(motorConfigurationType);
+
+        //Servos
         svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
         svoMagLift.setDirection(Servo.Direction.FORWARD);
 
@@ -118,21 +134,46 @@ public class teleop_control_normal extends LinearOpMode{
         svoWobble.setPosition(wobbleHold);
         svoForkHold.setPosition(forkHold);
 
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+        telemetry.clearAll();
+
+        //BEGIN
         waitForStart();
+        if (isStopRequested()) return;
+
         runtime.reset();
         timer.reset();
         toggleTimerB.reset();
         toggleTimerS.reset();
         toggleTimerF.reset();
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
-        waitForStart();
-
-        if (isStopRequested()) return;
-
+        tuningController.start();
+        
         while (!isStopRequested() && opModeIsActive()) {
+            double targetVelo = tuningController.update();
+            mtrFlywheel.setVelocity(targetVelo);
+
+            telemetry.addData("targetVelocity", targetVelo);
+
+            double motorVelo = mtrFlywheel.getVelocity();
+            telemetry.addData("velocity", motorVelo);
+            telemetry.addData("error", targetVelo - motorVelo);
+
+            telemetry.addData("upperBound", TuningController.rpmToTicksPerSecond(TuningController.TESTING_MAX_SPEED * 1.15));
+            telemetry.addData("lowerBound", 0);
+
+            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
+                setPIDFCoefficients(mtrFlywheel, MOTOR_VELO_PID);
+
+                lastKp = MOTOR_VELO_PID.p;
+                lastKi = MOTOR_VELO_PID.i;
+                lastKd = MOTOR_VELO_PID.d;
+                lastKf = MOTOR_VELO_PID.f;
+            }
+
+            tuningController.update();
+            telemetry.update();
 
             /**
              * Gamepad 1 Controls
@@ -288,7 +329,16 @@ public class teleop_control_normal extends LinearOpMode{
             mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
         }
     }
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+        ));
+    }
 
+    public static double getMotorVelocityF() {
+        // see https://docs.google.com/document/d/1tyWrXDfMidwYyP_5H4mZyVgaEswhOC35gvdmP-V-5hA/edit#heading=h.61g9ixenznbx
+        return 32767 * 60.0 / (TuningController.MOTOR_MAX_RPM * TuningController.MOTOR_TICKS_PER_REV);
+    }
 }
 
 
