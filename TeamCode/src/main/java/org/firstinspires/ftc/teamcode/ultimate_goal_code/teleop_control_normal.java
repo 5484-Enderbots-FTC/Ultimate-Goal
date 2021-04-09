@@ -60,19 +60,6 @@ public class teleop_control_normal extends LinearOpMode{
 
     public void runOpMode() {
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-
-        parameters.mode = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "AdafruitIMUCalibration.json";
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-        telemetry.addData("Mode", "calibrating...");
-        telemetry.update();
-
         mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
         mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
