@@ -28,12 +28,15 @@ public class teleop_control_pid extends LinearOpMode{
     FtcDashboard dashboard = FtcDashboard.getInstance();
     
     VoltageSensor batteryVoltageSensor;
+    /*
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(0, 0, 0, 0);
-    
-    BNO055IMU imu;
+     */
+
+    DcMotorEx mtrFlywheel;
+
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(80, 0, 60, 17.5);
 
     /***
 
@@ -41,8 +44,9 @@ public class teleop_control_pid extends LinearOpMode{
 
      */
 
-    double flywheelPower = 0.63;
-    double lessFlywheelPower = 0.55;
+    double normalFlywheelVelocity = 800;
+    double psFlywheelVelocity = 600;
+    double targetVelo = 0;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
@@ -62,11 +66,19 @@ public class teleop_control_pid extends LinearOpMode{
 
     public void runOpMode() {
 
+        //Velocity PID
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
+        mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
+        mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
+        MotorConfigurationType motorConfigurationType = mtrFlywheel.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        mtrFlywheel.setMotorType(motorConfigurationType);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
         setPIDFCoefficients(mtrFlywheel, MOTOR_VELO_PID);
@@ -80,6 +92,7 @@ public class teleop_control_pid extends LinearOpMode{
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
+        /*
         //Drivetrain motors
         mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
         mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -107,14 +120,7 @@ public class teleop_control_pid extends LinearOpMode{
         mtrWobble.setDirection(DcMotorEx.Direction.FORWARD);
 
         //Flywheel motors
-        mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
-        mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
-        MotorConfigurationType motorConfigurationType = mtrFlywheel.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        mtrFlywheel.setMotorType(motorConfigurationType);
 
         //Servos
         svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
@@ -138,6 +144,8 @@ public class teleop_control_pid extends LinearOpMode{
         telemetry.update();
         telemetry.clearAll();
 
+
+         */
         //BEGIN
         waitForStart();
         if (isStopRequested()) return;
@@ -148,17 +156,19 @@ public class teleop_control_pid extends LinearOpMode{
         toggleTimerS.reset();
         toggleTimerF.reset();
 
+
+
         tuningController.start();
         
         while (!isStopRequested() && opModeIsActive()) {
-            double targetVelo = tuningController.update();
-            mtrFlywheel.setVelocity(targetVelo);
+            //double targetVelo = tuningController.update();
+            //mtrFlywheel.setVelocity(targetVelo);
 
             telemetry.addData("targetVelocity", targetVelo);
 
             double motorVelo = mtrFlywheel.getVelocity();
             telemetry.addData("velocity", motorVelo);
-            telemetry.addData("error", targetVelo - motorVelo);
+            //telemetry.addData("error", targetVelo - motorVelo);
 
             telemetry.addData("upperBound", TuningController.rpmToTicksPerSecond(TuningController.TESTING_MAX_SPEED * 1.15));
             telemetry.addData("lowerBound", 0);
@@ -200,6 +210,7 @@ public class teleop_control_pid extends LinearOpMode{
                 slowMode = false;
                 toggleTimerS.reset();
             }
+            /*
 
             if((backwardsMode == false) && (slowMode == false)) {
                 //default controls
@@ -240,11 +251,13 @@ public class teleop_control_pid extends LinearOpMode{
                 mtrIntake.setPower(-1);
             }
 
+             */
+
 
             /**
              * Gamepad 2 Controls
              */
-
+/*
             mtrWobble.setPower(gamepad2.right_stick_y);
 
             if (magIsUp){
@@ -261,8 +274,11 @@ public class teleop_control_pid extends LinearOpMode{
                 svoRingPush.setPosition(ringPushIn);
             }
 
+ */
+
             if (gamepad2.y){
-                mtrFlywheel.setPower(lessFlywheelPower);
+                mtrFlywheel.setVelocity(psFlywheelVelocity);
+                targetVelo = psFlywheelVelocity;
             }
 
             /*
@@ -275,7 +291,7 @@ public class teleop_control_pid extends LinearOpMode{
                 ringSwiped = false;
             }
              */
-
+/*
             if(gamepad2.dpad_up){
                 svoMagLift.setPosition(magUp);
                 mtrFlywheel.setPower(flywheelPower);
@@ -287,14 +303,17 @@ public class teleop_control_pid extends LinearOpMode{
                 mtrFlywheel.setPower(0);
                 magIsUp = false;
             }
-
+*/
             if(gamepad2.a){
-                mtrFlywheel.setPower(flywheelPower);
+                mtrFlywheel.setVelocity(normalFlywheelVelocity);
+                targetVelo = normalFlywheelVelocity;
+                //mtrFlywheel.setPower(flywheelPower);
             }
             if(gamepad2.b){
                 mtrFlywheel.setPower(0);
+                targetVelo = 0;
             }
-
+/*
             if(gamepad2.left_bumper && (forkHeld == false) && (toggleTimerF.seconds() > toggleWaitTime)){
                 svoForkHold.setPosition(forkHold);
                 forkHeld = true;
@@ -306,15 +325,19 @@ public class teleop_control_pid extends LinearOpMode{
                 toggleTimerF.reset();
             }
 
+ */
+
             /**
              * Telemetry
              */
-
+/*
             telemetry.addData("Status", " Run Time: " + runtime.toString());
             telemetry.addData("Timer Status", " Time: " + timer.toString());
             telemetry.addData("backwards timer sec:", " " + toggleTimerB.seconds());
             telemetry.addData("slow timer sec:", " " + toggleTimerS.seconds());
             telemetry.update();
+
+ */
         }
 
 
@@ -323,10 +346,13 @@ public class teleop_control_pid extends LinearOpMode{
         timer.reset();
         while (timer.seconds() < waittime) {
             //pls keep driving lol
+            /*
             mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
             mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
             mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
             mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+
+             */
         }
     }
     private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
@@ -336,7 +362,6 @@ public class teleop_control_pid extends LinearOpMode{
     }
 
     public static double getMotorVelocityF() {
-        // see https://docs.google.com/document/d/1tyWrXDfMidwYyP_5H4mZyVgaEswhOC35gvdmP-V-5hA/edit#heading=h.61g9ixenznbx
         return 32767 * 60.0 / (TuningController.MOTOR_MAX_RPM * TuningController.MOTOR_TICKS_PER_REV);
     }
 }
