@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive;
+package org.firstinspires.ftc.teamcode.odometry.drive;
 
 import androidx.annotation.NonNull;
 
@@ -34,8 +34,8 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
-import org.firstinspires.ftc.teamcode.util.DashboardUtil;
-import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
+import org.firstinspires.ftc.teamcode.odometry.util.DashboardUtil;
+import org.firstinspires.ftc.teamcode.odometry.util.LynxModuleUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
