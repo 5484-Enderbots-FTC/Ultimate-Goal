@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 public class hardwareUltimateGoal {
-    
-    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel = null;
+
+    DcMotorEx mtrBL, mtrBR, mtrFL, mtrFR, mtrIntake, mtrWobble, mtrFlywheel = null;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
     VoltageSensor batteryVoltageSensor;
     HardwareMap hwMap = null;
@@ -16,8 +16,8 @@ public class hardwareUltimateGoal {
     double magDown = 0.85;
     double wobbleHold = 0.2;
     double forkHold = 0.8;
-    
-    public hardwareUltimateGoal(){
+
+    public hardwareUltimateGoal() {
 
     }
 
@@ -54,16 +54,16 @@ public class hardwareUltimateGoal {
         mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
-        svoMagLift = hwMap.get(Servo.class,"svoMagLift");
+        svoMagLift = hwMap.get(Servo.class, "svoMagLift");
         svoMagLift.setDirection(Servo.Direction.FORWARD);
 
-        svoRingPush = hwMap.get(Servo.class,"svoRingPush");
+        svoRingPush = hwMap.get(Servo.class, "svoRingPush");
         svoRingPush.setDirection(Servo.Direction.REVERSE);
 
-        svoWobble = hwMap.get(Servo.class,"svoWobble");
+        svoWobble = hwMap.get(Servo.class, "svoWobble");
         svoWobble.setDirection(Servo.Direction.FORWARD);
 
-        svoForkHold = hwMap.get(Servo.class,"svoForkHold");
+        svoForkHold = hwMap.get(Servo.class, "svoForkHold");
         svoForkHold.setDirection(Servo.Direction.FORWARD);
 
         svoRingPush.setPosition(ringPushIn);
