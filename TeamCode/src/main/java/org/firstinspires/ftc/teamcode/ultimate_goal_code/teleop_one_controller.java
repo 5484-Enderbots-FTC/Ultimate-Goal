@@ -9,9 +9,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="teleop solo",group="1-teleop")
+@TeleOp(name = "teleop solo", group = "1-teleop")
 @Disabled
-public class teleop_one_controller extends LinearOpMode{
+public class teleop_one_controller extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
     ElapsedTime toggleTimerS = new ElapsedTime();
@@ -47,7 +47,7 @@ public class teleop_one_controller extends LinearOpMode{
     boolean slowMode = false;
     boolean forkHeld = true;
 
-    public enum gamepadState{
+    public enum gamepadState {
         SHOOT_MODE,
         INTAKE_MODE
     }
@@ -115,13 +115,13 @@ public class teleop_one_controller extends LinearOpMode{
                 magIsUp = false;
             }
 
-            switch(gamepadState){
+            switch (gamepadState) {
 
                 case INTAKE_MODE:
-                    if(gamepad1.y && toggleTimerState.seconds()<0.5){
+                    if (gamepad1.y && toggleTimerState.seconds() < 0.5) {
                         gamepadState = gamepadState.SHOOT_MODE;
                     }
-                    
+
                     /***
                      * Slow & Backward mode
                      */
@@ -134,7 +134,6 @@ public class teleop_one_controller extends LinearOpMode{
                         backwardsMode = false;
                         toggleTimerB.reset();
                     }
-
                     if (gamepad1.left_bumper && (slowMode == false) && (toggleTimerS.seconds() > toggleWaitTime)) {
                         //activate slow mode
                         slowMode = true;
@@ -160,14 +159,14 @@ public class teleop_one_controller extends LinearOpMode{
 
 
                 case SHOOT_MODE:
-                    if(gamepad1.y && toggleTimerState.seconds() > toggleWaitTime){
+                    if (gamepad1.y && toggleTimerState.seconds() > toggleWaitTime) {
                         gamepadState = gamepadState.INTAKE_MODE;
                     }
 
                     /***
                      * Flywheel speed control
                      */
-                    
+
                     if (gamepad1.y) {
                         robot.mtrFlywheel.setPower(lessFlywheelPower);
                     }
@@ -177,11 +176,11 @@ public class teleop_one_controller extends LinearOpMode{
                     if (gamepad1.b) {
                         robot.mtrFlywheel.setPower(0);
                     }
-                    
+
                     /***
                      * Ring push / unjam
                      */
-                    
+
                     if (magIsUp) {
                         robot.mtrIntake.setPower(0);
                         if (gamepad1.right_bumper) {
@@ -207,6 +206,7 @@ public class teleop_one_controller extends LinearOpMode{
 
 
     }
+
     private void waitFor(double waittime) {
         runtime.reset();
         while (runtime.seconds() < waittime) {
