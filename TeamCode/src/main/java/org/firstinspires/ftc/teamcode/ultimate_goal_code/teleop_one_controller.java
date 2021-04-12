@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,132 +14,194 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class teleop_one_controller extends LinearOpMode{
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
+    ElapsedTime toggleTimerS = new ElapsedTime();
+    ElapsedTime toggleTimerB = new ElapsedTime();
+    ElapsedTime toggleTimerF = new ElapsedTime();
 
-    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble;
-    Servo svoMagLift, svoRingPush;
+    ElapsedTime toggleTimerState = new ElapsedTime();
 
-    rndmState currentState;
-    wobbleDriveState wobbleState;
+    gamepadState gamepadState;
+
+    hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
     /***
 
      ~ Constants ~
 
      */
+    double flywheelPower = 0.63;
+    double lessFlywheelPower = 0.55;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
+    double ringJamnt = 0.2;
+    double wobbleRelease = 0.37;
+    double wobbleHold = 0.2;
+    double forkHold = 0.8;
+    double forkRelease = 0.7;
+    double toggleWaitTime = 0.5;
+
     boolean magIsUp = false;
-    boolean toggleSwitch = false;
+    boolean backwardsMode = false;
+    boolean slowMode = false;
+    boolean forkHeld = true;
 
-    public enum wobbleDriveState{
-        EVERTHING_ELSE,
-        WOBBLE_START
-    }
-
-    public enum rndmState{
-        INTAKE_START,
-        WOBBLE_HOLD,
-        WOBBLE_RELEASE
+    public enum gamepadState{
+        SHOOT_MODE,
+        INTAKE_MODE
     }
 
     public void runOpMode() {
+        robot.init(hardwareMap);
 
-        mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
-        mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
-
-        mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
-        mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
-
-        mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
-        mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
-
-        mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
-        mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
-
-        mtrIntake = hardwareMap.get(DcMotorEx.class, "mtrIntake");
-        mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrIntake.setDirection(DcMotorEx.Direction.REVERSE);
-
-        mtrWobble = hardwareMap.get(DcMotorEx.class, "mtrWobble");
-        mtrWobble.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrWobble.setDirection(DcMotorEx.Direction.FORWARD);
-/*
-        svoWobble = hardwareMap.get(Servo.class,"svoWobble");
-        svoWobble.setDirection(Servo.Direction.FORWARD);
-
- */
-
-        svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
-        svoMagLift.setDirection(Servo.Direction.FORWARD);
-
-        svoRingPush = hardwareMap.get(Servo.class,"svoRingPush");
-        svoRingPush.setDirection(Servo.Direction.REVERSE);
+        gamepadState = gamepadState.INTAKE_MODE;
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        //svoWobble.setPosition(wobbleGrab);
-        svoRingPush.setPosition(ringPushIn);
-        svoMagLift.setPosition(magDown);
-        magIsUp = false;
-
-        currentState = rndmState.INTAKE_START;
-
-        wobbleState = wobbleDriveState.WOBBLE_START;
-
         waitForStart();
+        if (isStopRequested()) return;
+
         runtime.reset();
         timer.reset();
+        runtime.reset();
+        timer.reset();
+        toggleTimerB.reset();
+        toggleTimerS.reset();
+        toggleTimerF.reset();
+        toggleTimerState.reset();
 
         while (opModeIsActive()) {
 
-            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x));
-            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x));
-            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x));
-            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x));
+            if ((backwardsMode == false) && (slowMode == false)) {
+                //default controls
+                robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            }
+            if ((backwardsMode == true) && (slowMode == false)) {
+                //backwards mode only
+                robot.mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+            }
+            if ((backwardsMode == false) && (slowMode == true)) {
+                //slow mode only
+                robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * 0.5);
+                robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x) * 0.5);
+                robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * 0.5);
+                robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) * 0.5);
+            }
+            if ((backwardsMode == true) && (slowMode == true)) {
+                //backwards and slow modes together
+                robot.mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * 0.5);
+                robot.mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) * 0.5);
+                robot.mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * 0.5);
+                robot.mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x) * 0.5);
+            }
 
-            mtrWobble.setPower(gamepad1.right_stick_y);
-
-            if (gamepad1.a){
-                mtrIntake.setPower(1);
-            }
-            if (gamepad1.b){
-                mtrIntake.setPower(0);
-            }
-            if (gamepad1.x){
-                mtrIntake.setPower(-1);
-            }
-            if(gamepad1.y){
-
-            }
-
-            if (magIsUp){
-                if(gamepad1.right_bumper){
-                    svoRingPush.setPosition(ringPushOut);
-                    waitFor(0.5);
-                    svoRingPush.setPosition(ringPushIn);
-                }
-            }
-            if(gamepad1.dpad_up){
-                svoMagLift.setPosition(magUp);
+            if (gamepad1.dpad_up) {
+                robot.svoMagLift.setPosition(magUp);
+                robot.mtrFlywheel.setPower(flywheelPower);
                 magIsUp = true;
             }
-            if(gamepad1.dpad_down){
-                svoMagLift.setPosition(magDown);
+            if (gamepad1.dpad_down) {
+                robot.mtrIntake.setPower(1);
+                robot.svoMagLift.setPosition(magDown);
+                robot.mtrFlywheel.setPower(0);
                 magIsUp = false;
             }
 
+            switch(gamepadState){
+
+                case INTAKE_MODE:
+                    if(gamepad1.y && toggleTimerState.seconds()<0.5){
+                        gamepadState = gamepadState.SHOOT_MODE;
+                    }
+                    
+                    /***
+                     * Slow & Backward mode
+                     */
+                    if (gamepad1.right_bumper && (backwardsMode == false) && (toggleTimerB.seconds() > toggleWaitTime)) {
+                        //activate backwards mode
+                        backwardsMode = true;
+                        toggleTimerB.reset();
+                    } else if (gamepad1.right_bumper && (backwardsMode == true) && (toggleTimerB.seconds() > toggleWaitTime)) {
+                        //deactivate backwards mode
+                        backwardsMode = false;
+                        toggleTimerB.reset();
+                    }
+
+                    if (gamepad1.left_bumper && (slowMode == false) && (toggleTimerS.seconds() > toggleWaitTime)) {
+                        //activate slow mode
+                        slowMode = true;
+                        toggleTimerS.reset();
+                    } else if (gamepad1.left_bumper && (slowMode == true) && (toggleTimerS.seconds() > toggleWaitTime)) {
+                        //deactivate slow mode
+                        slowMode = false;
+                        toggleTimerS.reset();
+                    }
+
+                    /***
+                     * Intake control
+                     */
+                    if (gamepad1.a) {
+                        robot.mtrIntake.setPower(1);
+                    }
+                    if (gamepad1.b) {
+                        robot.mtrIntake.setPower(0);
+                    }
+                    if (gamepad1.x) {
+                        robot.mtrIntake.setPower(-1);
+                    }
+
+
+                case SHOOT_MODE:
+                    if(gamepad1.y && toggleTimerState.seconds() > toggleWaitTime){
+                        gamepadState = gamepadState.INTAKE_MODE;
+                    }
+
+                    /***
+                     * Flywheel speed control
+                     */
+                    
+                    if (gamepad1.y) {
+                        robot.mtrFlywheel.setPower(lessFlywheelPower);
+                    }
+                    if (gamepad1.a) {
+                        robot.mtrFlywheel.setPower(flywheelPower);
+                    }
+                    if (gamepad1.b) {
+                        robot.mtrFlywheel.setPower(0);
+                    }
+                    
+                    /***
+                     * Ring push / unjam
+                     */
+                    
+                    if (magIsUp) {
+                        robot.mtrIntake.setPower(0);
+                        if (gamepad1.right_bumper) {
+                            robot.svoRingPush.setPosition(ringPushOut);
+                            waitFor(0.5);
+                            robot.svoRingPush.setPosition(ringPushIn);
+                        }
+                    }
+                    if (gamepad1.right_trigger > 0.1) {
+                        robot.svoRingPush.setPosition(ringJamnt);
+                        waitFor(0.5);
+                        robot.svoRingPush.setPosition(ringPushIn);
+                    }
+
+                default:
+                    gamepadState = gamepadState.INTAKE_MODE;
+
+            }
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.update();
-            telemetry.addData("Timer Status", "Time: " + timer.toString());
-            telemetry.addData("Mag Status", "MagIsUp: " + magIsUp);
             telemetry.update();
         }
 
@@ -148,10 +211,10 @@ public class teleop_one_controller extends LinearOpMode{
         runtime.reset();
         while (runtime.seconds() < waittime) {
             //don't do anything pls
-            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+            robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+            robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+            robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
         }
     }
 
