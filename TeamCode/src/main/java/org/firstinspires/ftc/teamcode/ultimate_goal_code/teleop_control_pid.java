@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -8,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -26,15 +28,8 @@ public class teleop_control_pid extends LinearOpMode{
     ElapsedTime toggleTimerR = new ElapsedTime();
 
     FtcDashboard dashboard = FtcDashboard.getInstance();
-    
-    VoltageSensor batteryVoltageSensor;
-    /*
-    DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
-    Servo svoWobble, svoMagLift, svoRingPush, svoForkHold;
 
-     */
-
-    DcMotorEx mtrFlywheel;
+    hardwareUltimateGoal robot   = new hardwareUltimateGoal();
 
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(80, 0, 60, 17.5);
 
@@ -65,23 +60,20 @@ public class teleop_control_pid extends LinearOpMode{
     boolean ringSwiped = false;
 
     public void runOpMode() {
+        robot.init(hardwareMap);
 
         //Velocity PID
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
-
-        mtrFlywheel = hardwareMap.get(DcMotorEx.class, "mtrFlywheel");
-        mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
-
-        MotorConfigurationType motorConfigurationType = mtrFlywheel.getMotorType().clone();
+        //PID motor config
+        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
         motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        mtrFlywheel.setMotorType(motorConfigurationType);
+        robot.mtrFlywheel.setMotorType(motorConfigurationType);
 
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-        setPIDFCoefficients(mtrFlywheel, MOTOR_VELO_PID);
+        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
+
 
         TuningController tuningController = new TuningController();
 
@@ -92,60 +84,10 @@ public class teleop_control_pid extends LinearOpMode{
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-        /*
-        //Drivetrain motors
-        mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
-        mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
-
-        mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
-        mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
-
-        mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
-        mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
-
-        mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
-        mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
-
-        //Intake & Wobble lift
-        mtrIntake = hardwareMap.get(DcMotorEx.class, "mtrIntake");
-        mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        mtrIntake.setDirection(DcMotorEx.Direction.REVERSE);
-
-        mtrWobble = hardwareMap.get(DcMotorEx.class, "mtrWobble");
-        mtrWobble.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrWobble.setDirection(DcMotorEx.Direction.FORWARD);
-
-        //Flywheel motors
-
-
-        //Servos
-        svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
-        svoMagLift.setDirection(Servo.Direction.FORWARD);
-
-        svoRingPush = hardwareMap.get(Servo.class,"svoRingPush");
-        svoRingPush.setDirection(Servo.Direction.REVERSE);
-
-        svoWobble = hardwareMap.get(Servo.class,"svoWobble");
-        svoWobble.setDirection(Servo.Direction.FORWARD);
-
-        svoForkHold = hardwareMap.get(Servo.class,"svoForkHold");
-        svoForkHold.setDirection(Servo.Direction.FORWARD);
-
-        svoRingPush.setPosition(ringPushIn);
-        svoMagLift.setPosition(magDown);
-        svoWobble.setPosition(wobbleHold);
-        svoForkHold.setPosition(forkHold);
-
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         telemetry.clearAll();
 
-
-         */
         //BEGIN
         waitForStart();
         if (isStopRequested()) return;
@@ -156,25 +98,20 @@ public class teleop_control_pid extends LinearOpMode{
         toggleTimerS.reset();
         toggleTimerF.reset();
 
-
-
         tuningController.start();
         
         while (!isStopRequested() && opModeIsActive()) {
-            //double targetVelo = tuningController.update();
-            //mtrFlywheel.setVelocity(targetVelo);
-
+            /**
+             * Telemetry & Velocity PID
+             */
+            double motorVelo = robot.mtrFlywheel.getVelocity();
+            telemetry.addData("Status", " Run Time: " + runtime.toString());
             telemetry.addData("targetVelocity", targetVelo);
-
-            double motorVelo = mtrFlywheel.getVelocity();
             telemetry.addData("velocity", motorVelo);
-            //telemetry.addData("error", targetVelo - motorVelo);
-
-            telemetry.addData("upperBound", TuningController.rpmToTicksPerSecond(TuningController.TESTING_MAX_SPEED * 1.15));
-            telemetry.addData("lowerBound", 0);
+            telemetry.addData("error", targetVelo - motorVelo);
 
             if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
-                setPIDFCoefficients(mtrFlywheel, MOTOR_VELO_PID);
+                setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
 
                 lastKp = MOTOR_VELO_PID.p;
                 lastKi = MOTOR_VELO_PID.i;
@@ -210,134 +147,116 @@ public class teleop_control_pid extends LinearOpMode{
                 slowMode = false;
                 toggleTimerS.reset();
             }
-            /*
+
 
             if((backwardsMode == false) && (slowMode == false)) {
                 //default controls
-                mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-                mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-                mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-                mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
             }
             if((backwardsMode == true) && (slowMode == false)){
                 //backwards mode only
-                mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-                mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
-                mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-                mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+                robot.mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+                robot.mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
             }
             if((backwardsMode == false) && (slowMode == true)){
                 //slow mode only
-                mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
-                mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
-                mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
-                mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
             }
             if((backwardsMode == true) && (slowMode == true)){
                 //backwards and slow modes together
-                mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
-                mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
-                mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
-                mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                robot.mtrBL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
+                robot.mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                robot.mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x)*0.5);
+                robot.mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x)*0.5);
             }
 
             if (gamepad1.a){
-                mtrIntake.setPower(1);
+                robot.mtrIntake.setPower(1);
             }
             if (gamepad1.b){
-                mtrIntake.setPower(0);
+                robot.mtrIntake.setPower(0);
             }
             if (gamepad1.x){
-                mtrIntake.setPower(-1);
+                robot.mtrIntake.setPower(-1);
             }
-
-             */
-
 
             /**
              * Gamepad 2 Controls
              */
-/*
-            mtrWobble.setPower(gamepad2.right_stick_y);
+            robot.mtrWobble.setPower(gamepad2.right_stick_y);
 
             if (magIsUp){
-                mtrIntake.setPower(0);
+                robot.mtrIntake.setPower(0);
                 if(gamepad2.right_bumper){
-                    svoRingPush.setPosition(ringPushOut);
+                    robot.svoRingPush.setPosition(ringPushOut);
                     waitFor(0.5);
-                    svoRingPush.setPosition(ringPushIn);
+                    robot.svoRingPush.setPosition(ringPushIn);
                 }
             }
             if(gamepad2.right_trigger > 0.1){
-                svoRingPush.setPosition(ringJamnt);
+                robot.svoRingPush.setPosition(ringJamnt);
                 waitFor(0.5);
-                svoRingPush.setPosition(ringPushIn);
+                robot.svoRingPush.setPosition(ringPushIn);
             }
 
- */
 
-            if (gamepad2.y){
-                mtrFlywheel.setVelocity(psFlywheelVelocity);
-                targetVelo = psFlywheelVelocity;
-            }
 
-            /*
             if (gamepad2.y && (ringSwiped == false)){
-                svoRingPush.setPosition(ringJamnt);
+                robot.svoRingPush.setPosition(ringJamnt);
                 ringSwiped = true;
             }
             if (gamepad2.y && (ringSwiped == true)){
-                svoRingPush.setPosition(ringPushIn);
+                robot.svoRingPush.setPosition(ringPushIn);
                 ringSwiped = false;
             }
-             */
-/*
+
             if(gamepad2.dpad_up){
-                svoMagLift.setPosition(magUp);
-                mtrFlywheel.setPower(flywheelPower);
+                robot.svoMagLift.setPosition(magUp);
+                robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+                targetVelo = normalFlywheelVelocity;
                 magIsUp = true;
             }
+
+
             if(gamepad2.dpad_down){
-                mtrIntake.setPower(1);
-                svoMagLift.setPosition(magDown);
-                mtrFlywheel.setPower(0);
+                robot.mtrIntake.setPower(1);
+                robot.svoMagLift.setPosition(magDown);
+                robot.mtrFlywheel.setPower(0);
                 magIsUp = false;
             }
-*/
             if(gamepad2.a){
-                mtrFlywheel.setVelocity(normalFlywheelVelocity);
+                robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
                 targetVelo = normalFlywheelVelocity;
-                //mtrFlywheel.setPower(flywheelPower);
+
+            }
+            if (gamepad2.y){
+                robot.mtrFlywheel.setVelocity(psFlywheelVelocity);
+                targetVelo = psFlywheelVelocity;
             }
             if(gamepad2.b){
-                mtrFlywheel.setPower(0);
+                robot.mtrFlywheel.setPower(0);
                 targetVelo = 0;
             }
-/*
+
             if(gamepad2.left_bumper && (forkHeld == false) && (toggleTimerF.seconds() > toggleWaitTime)){
-                svoForkHold.setPosition(forkHold);
+                robot.svoForkHold.setPosition(forkHold);
                 forkHeld = true;
                 toggleTimerF.reset();
             }
             else if(gamepad2.left_bumper && (forkHeld == true) && (toggleTimerF.seconds() > toggleWaitTime)){
-                svoForkHold.setPosition(forkRelease);
+                robot.svoForkHold.setPosition(forkRelease);
                 forkHeld = false;
                 toggleTimerF.reset();
             }
 
- */
-
-            /**
-             * Telemetry
-             */
-/*
-            telemetry.addData("Status", " Run Time: " + runtime.toString());
-            telemetry.addData("Timer Status", " Time: " + timer.toString());
-            telemetry.addData("backwards timer sec:", " " + toggleTimerB.seconds());
-            telemetry.addData("slow timer sec:", " " + toggleTimerS.seconds());
-            telemetry.update();
-
- */
         }
 
 
@@ -346,24 +265,23 @@ public class teleop_control_pid extends LinearOpMode{
         timer.reset();
         while (timer.seconds() < waittime) {
             //pls keep driving lol
-            /*
-            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+            robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+            robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+            robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
 
-             */
         }
     }
     private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
         motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
         ));
     }
 
     public static double getMotorVelocityF() {
         return 32767 * 60.0 / (TuningController.MOTOR_MAX_RPM * TuningController.MOTOR_TICKS_PER_REV);
     }
+
 }
 
 
