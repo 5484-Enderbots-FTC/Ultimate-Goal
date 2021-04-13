@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -44,7 +45,7 @@ public class hardwareUltimateGoal {
 
         mtrIntake = hwMap.get(DcMotorEx.class, "mtrIntake");
         mtrIntake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        mtrIntake.setDirection(DcMotorEx.Direction.REVERSE);
+        mtrIntake.setDirection(DcMotorEx.Direction.FORWARD);
 
         mtrWobble = hwMap.get(DcMotorEx.class, "mtrWobble");
         mtrWobble.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);

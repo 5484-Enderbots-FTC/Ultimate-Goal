@@ -39,8 +39,8 @@ public class teleop_control_pid extends LinearOpMode {
 
      */
 
-    double normalFlywheelVelocity = 800;
-    double psFlywheelVelocity = 600;
+    double normalFlywheelVelocity = 1300;
+    double psFlywheelVelocity = 1200;
     double targetVelo = 0;
     double magDown = 0.85;
     double magUp = 0.58;
@@ -75,12 +75,7 @@ public class teleop_control_pid extends LinearOpMode {
         setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
 
 
-        TuningController tuningController = new TuningController();
-
-        double lastKp = 0.0;
-        double lastKi = 0.0;
-        double lastKd = 0.0;
-        double lastKf = getMotorVelocityF();
+        //TuningController tuningController = new TuningController();
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
@@ -98,7 +93,7 @@ public class teleop_control_pid extends LinearOpMode {
         toggleTimerS.reset();
         toggleTimerF.reset();
 
-        tuningController.start();
+        //tuningController.start();
 
         while (!isStopRequested() && opModeIsActive()) {
             /**
@@ -110,16 +105,7 @@ public class teleop_control_pid extends LinearOpMode {
             telemetry.addData("velocity", motorVelo);
             telemetry.addData("error", targetVelo - motorVelo);
 
-            if (lastKp != MOTOR_VELO_PID.p || lastKi != MOTOR_VELO_PID.i || lastKd != MOTOR_VELO_PID.d || lastKf != MOTOR_VELO_PID.f) {
-                setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
-
-                lastKp = MOTOR_VELO_PID.p;
-                lastKi = MOTOR_VELO_PID.i;
-                lastKd = MOTOR_VELO_PID.d;
-                lastKf = MOTOR_VELO_PID.f;
-            }
-
-            tuningController.update();
+            //tuningController.update();
             telemetry.update();
 
             /**
