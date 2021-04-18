@@ -1,60 +1,94 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "teleop solo", group = "1-teleop")
-@Disabled
 public class teleop_one_controller extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
     ElapsedTime toggleTimerS = new ElapsedTime();
     ElapsedTime toggleTimerB = new ElapsedTime();
     ElapsedTime toggleTimerF = new ElapsedTime();
+    ElapsedTime toggleTimerIntake = new ElapsedTime();
+    ElapsedTime toggleTimerShooter = new ElapsedTime();
 
     ElapsedTime toggleTimerState = new ElapsedTime();
 
     gamepadState gamepadState;
+    ShootState currentState;
+
+    FtcDashboard dashboard = FtcDashboard.getInstance();
 
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
+
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
     /***
 
      ~ Constants ~
 
      */
-    double flywheelPower = 0.63;
-    double lessFlywheelPower = 0.55;
+    double timeBetweenShots = 0.7;
+    double servoMoveTime = 0.33;
+
+    double normalFlywheelVelocity = 1350;
+    double psFlywheelVelocity = 1200;
+    double targetVelo = 0;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
     double ringJamnt = 0.2;
-    double wobbleRelease = 0.37;
-    double wobbleHold = 0.2;
-    double forkHold = 0.8;
-    double forkRelease = 0.7;
     double toggleWaitTime = 0.5;
 
     boolean magIsUp = false;
     boolean backwardsMode = false;
     boolean slowMode = false;
-    boolean forkHeld = true;
+    boolean intakeRunning = false;
+    boolean flywheelRunning = false;
 
-    public enum gamepadState {
+    private enum gamepadState {
         SHOOT_MODE,
         INTAKE_MODE
+    }
+    private enum ShootState {
+        NOTHING,
+        ZERO_RINGS_SHOT,
+        ONE_RING_SHOT,
+        TWO_RINGS_SHOT
     }
 
     public void runOpMode() {
         robot.init(hardwareMap);
 
+        //Velocity PID
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+        //PID motor config
+        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        robot.mtrFlywheel.setMotorType(motorConfigurationType);
+
+        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
+
+
+        //TuningController tuningController = new TuningController();
+
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+
+        currentState = ShootState.NOTHING;
         gamepadState = gamepadState.INTAKE_MODE;
 
         telemetry.addData("Status", "Initialized");
@@ -105,7 +139,8 @@ public class teleop_one_controller extends LinearOpMode {
 
             if (gamepad1.dpad_up) {
                 robot.svoMagLift.setPosition(magUp);
-                robot.mtrFlywheel.setPower(flywheelPower);
+                robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+                targetVelo = normalFlywheelVelocity;
                 magIsUp = true;
             }
             if (gamepad1.dpad_down) {
@@ -115,12 +150,14 @@ public class teleop_one_controller extends LinearOpMode {
                 magIsUp = false;
             }
 
-            switch (gamepadState) {
+            if (gamepad1.x && gamepadState != gamepadState.INTAKE_MODE && toggleTimerState.seconds() > toggleWaitTime) {
+                gamepadState = gamepadState.INTAKE_MODE;
+            } else if (gamepad1.x && gamepadState != gamepadState.SHOOT_MODE && toggleTimerState.seconds() > toggleWaitTime) {
+                gamepadState = gamepadState.SHOOT_MODE;
+            }
 
+            switch (gamepadState) {
                 case INTAKE_MODE:
-                    if (gamepad1.y && toggleTimerState.seconds() < 0.5) {
-                        gamepadState = gamepadState.SHOOT_MODE;
-                    }
 
                     /***
                      * Slow & Backward mode
@@ -147,49 +184,87 @@ public class teleop_one_controller extends LinearOpMode {
                     /***
                      * Intake control
                      */
-                    if (gamepad1.a) {
-                        robot.mtrIntake.setPower(1);
+                    if(!magIsUp) {
+                        if (gamepad1.a && (intakeRunning == false) && toggleTimerIntake.seconds() > toggleWaitTime) {
+                            robot.mtrIntake.setPower(1);
+                            intakeRunning = true;
+                            toggleTimerIntake.reset();
+                        }
+                    }
+                    if (gamepad1.a && (intakeRunning == true) && toggleTimerIntake.seconds() > toggleWaitTime) {
+                        robot.mtrIntake.setPower(0);
+                        intakeRunning = false;
+                        toggleTimerIntake.reset();
                     }
                     if (gamepad1.b) {
-                        robot.mtrIntake.setPower(0);
-                    }
-                    if (gamepad1.x) {
                         robot.mtrIntake.setPower(-1);
+                        intakeRunning = true;
+                        toggleTimerIntake.reset();
                     }
 
 
                 case SHOOT_MODE:
-                    if (gamepad1.y && toggleTimerState.seconds() > toggleWaitTime) {
-                        gamepadState = gamepadState.INTAKE_MODE;
-                    }
 
                     /***
                      * Flywheel speed control
                      */
 
-                    if (gamepad1.y) {
-                        robot.mtrFlywheel.setPower(lessFlywheelPower);
+                    if (gamepad2.a && flywheelRunning == false && toggleTimerShooter.seconds() > toggleWaitTime) {
+                        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+                        targetVelo = normalFlywheelVelocity;
+                        flywheelRunning = true;
                     }
-                    if (gamepad1.a) {
-                        robot.mtrFlywheel.setPower(flywheelPower);
+                    if (gamepad2.b) {
+                        robot.mtrFlywheel.setVelocity(psFlywheelVelocity);
+                        targetVelo = psFlywheelVelocity;
+                        flywheelRunning = true;
                     }
-                    if (gamepad1.b) {
+                    if (gamepad2.a && flywheelRunning == true && toggleTimerShooter.seconds() > toggleWaitTime) {
                         robot.mtrFlywheel.setPower(0);
+                        targetVelo = 0;
+                        flywheelRunning = false;
                     }
 
                     /***
-                     * Ring push / unjam
+                     * Shoot 3 rings
                      */
 
                     if (magIsUp) {
                         robot.mtrIntake.setPower(0);
-                        if (gamepad1.right_bumper) {
-                            robot.svoRingPush.setPosition(ringPushOut);
-                            waitFor(0.5);
-                            robot.svoRingPush.setPosition(ringPushIn);
+                        intakeRunning = false;
+                        if (gamepad2.right_bumper) {
+                            currentState = ShootState.ZERO_RINGS_SHOT;
                         }
                     }
-                    if (gamepad1.right_trigger > 0.1) {
+
+                    switch(currentState){
+                        case NOTHING:
+                            break;
+                        case ZERO_RINGS_SHOT:
+                            robot.svoRingPush.setPosition(ringPushOut);
+                            waitFor(servoMoveTime);
+                            robot.svoRingPush.setPosition(ringPushIn);
+                            waitFor(timeBetweenShots);
+                            currentState = ShootState.ONE_RING_SHOT;
+                        case ONE_RING_SHOT:
+                            robot.svoRingPush.setPosition(ringPushOut);
+                            waitFor(servoMoveTime);
+                            robot.svoRingPush.setPosition(ringPushIn);
+                            waitFor(timeBetweenShots);
+                            currentState = ShootState.TWO_RINGS_SHOT;
+                        case TWO_RINGS_SHOT:
+                            robot.svoRingPush.setPosition(ringPushOut);
+                            waitFor(servoMoveTime);
+                            robot.svoRingPush.setPosition(ringPushIn);
+                            waitFor(timeBetweenShots);
+                            currentState = ShootState.NOTHING;
+                    }
+
+                    if(gamepad2.y && currentState != ShootState.NOTHING){
+                        currentState = ShootState.NOTHING;
+                    }
+
+                    if (gamepad2.right_trigger > 0.1) {
                         robot.svoRingPush.setPosition(ringJamnt);
                         waitFor(0.5);
                         robot.svoRingPush.setPosition(ringPushIn);
@@ -199,6 +274,8 @@ public class teleop_one_controller extends LinearOpMode {
                     gamepadState = gamepadState.INTAKE_MODE;
 
             }
+
+
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.update();
@@ -217,5 +294,9 @@ public class teleop_one_controller extends LinearOpMode {
             robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
         }
     }
-
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
+        ));
+    }
 }
