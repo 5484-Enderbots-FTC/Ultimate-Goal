@@ -278,6 +278,7 @@ public class teleop_one_controller extends LinearOpMode {
 
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("State Status: ", gamepadState);
             telemetry.update();
         }
 
