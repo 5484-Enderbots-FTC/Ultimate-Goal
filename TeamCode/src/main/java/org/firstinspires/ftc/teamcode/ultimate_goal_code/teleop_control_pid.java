@@ -19,6 +19,7 @@ public class teleop_control_pid extends LinearOpMode {
     ElapsedTime toggleTimerB = new ElapsedTime();
     ElapsedTime toggleTimerF = new ElapsedTime();
     ElapsedTime toggleTimerIntake = new ElapsedTime();
+    ElapsedTime toggleTimerRevIntake = new ElapsedTime();
     ElapsedTime toggleTimerShooter = new ElapsedTime();
 
     FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -57,6 +58,7 @@ public class teleop_control_pid extends LinearOpMode {
     boolean slowMode = false;
     boolean forkHeld = true;
     boolean intakeRunning = false;
+    boolean revIntakeRunning = false;
     boolean flywheelRunning = false;
 
     private enum ShootState {
@@ -103,6 +105,7 @@ public class teleop_control_pid extends LinearOpMode {
         toggleTimerF.reset();
         toggleTimerIntake.reset();
         toggleTimerShooter.reset();
+        toggleTimerRevIntake.reset();
 
         //tuningController.start();
 
@@ -176,22 +179,37 @@ public class teleop_control_pid extends LinearOpMode {
             }
 
             if(!magIsUp) {
-                if (gamepad1.a && (intakeRunning == false) && toggleTimerIntake.seconds() > toggleWaitTime) {
+                if (gamepad1.a) {
                     robot.mtrIntake.setPower(1);
-                    intakeRunning = true;
-                    toggleTimerIntake.reset();
                 }
             }
+
+            if(gamepad1.b){
+                robot.mtrIntake.setPower(0);
+            }
+            if(gamepad1.x){
+                robot.mtrIntake.setPower(-1);
+            }
+            /*
             if (gamepad1.a && (intakeRunning == true) && toggleTimerIntake.seconds() > toggleWaitTime) {
                 robot.mtrIntake.setPower(0);
                 intakeRunning = false;
                 toggleTimerIntake.reset();
             }
-            if (gamepad1.b) {
+            if (gamepad1.b && (revIntakeRunning == false) && toggleTimerRevIntake.seconds() > toggleWaitTime) {
                 robot.mtrIntake.setPower(-1);
-                intakeRunning = true;
+                intakeRunning = false;
+                revIntakeRunning = true;
                 toggleTimerIntake.reset();
             }
+            if (gamepad1.b && (revIntakeRunning == true) && toggleTimerRevIntake.seconds() > toggleWaitTime) {
+                robot.mtrIntake.setPower(0);
+                intakeRunning = false;
+                revIntakeRunning = false;
+                toggleTimerIntake.reset();
+            }
+
+             */
 
             /**
              * Gamepad 2 Controls
@@ -237,6 +255,7 @@ public class teleop_control_pid extends LinearOpMode {
                 robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
                 targetVelo = normalFlywheelVelocity;
                 flywheelRunning = true;
+                toggleTimerShooter.reset();
             }
             if (gamepad2.b) {
                 robot.mtrFlywheel.setVelocity(psFlywheelVelocity);
@@ -247,6 +266,7 @@ public class teleop_control_pid extends LinearOpMode {
                 robot.mtrFlywheel.setPower(0);
                 targetVelo = 0;
                 flywheelRunning = false;
+                toggleTimerShooter.reset();
             }
 
             if (gamepad2.right_trigger > 0.1) {

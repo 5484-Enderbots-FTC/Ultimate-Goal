@@ -15,10 +15,13 @@ import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
  * This is a simple routine to test translational drive capabilities.
  */
 @Config
-@Disabled
 @Autonomous(group = "drive")
 public class StraightTest extends LinearOpMode {
     public static double DISTANCE = 60; // in
+
+    //Trial 1 with p=20 i=1.8 d=14  DISTANCE was 57.75 %error = 3.75%
+    //Trial 2 with p=20 i=1.8 d=14  DISTANCE was 58.0 %error = 3.33%
+    //Trial 3 with p=20 i=1.8 d=14  DISTANCE was 57.5 %errpr = 4.17%
 
     @Override
     public void runOpMode() throws InterruptedException {

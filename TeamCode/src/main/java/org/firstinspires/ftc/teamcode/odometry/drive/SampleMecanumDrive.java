@@ -61,8 +61,13 @@ import static org.firstinspires.ftc.teamcode.odometry.drive.DriveConstants.kV;
 public class SampleMecanumDrive extends MecanumDrive {
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(0, 0, 0);
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0, 0, 0);
+                                                                    //kp heading: 1
+                                                                    //kp trans: 0.5
 
-    public static double LATERAL_MULTIPLIER = 1;
+    public static double LATERAL_MULTIPLIER = 1.4183;
+
+    //set to a distance of 60in the robot strafed an avg of only 44.5in so the multiplier is now
+    // 60/44.5 = 1.3483
 
     public static double VX_WEIGHT = 1;
     public static double VY_WEIGHT = 1;
@@ -136,19 +141,19 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
         mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
+        mtrBL.setDirection(DcMotorEx.Direction.FORWARD);
 
         mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
         mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
+        mtrBR.setDirection(DcMotorEx.Direction.REVERSE);
 
         mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
         mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
+        mtrFL.setDirection(DcMotorEx.Direction.FORWARD);
 
         mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
         mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
+        mtrFR.setDirection(DcMotorEx.Direction.REVERSE);
 
         motors = Arrays.asList(mtrFL, mtrBL, mtrBR, mtrFR);
 

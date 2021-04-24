@@ -35,12 +35,13 @@ import org.firstinspires.ftc.teamcode.odometry.drive.StandardTrackingWheelLocali
  * satisfactory result is produced.
  */
 @Config
-@Disabled
 @Autonomous(group="drive")
 public class TrackingWheelForwardOffsetTuner extends LinearOpMode {
     public static double ANGLE = 180; // deg
     public static int NUM_TRIALS = 5;
     public static int DELAY = 1000; // ms
+
+    //gave 0.49 forward offset
 
     @Override
     public void runOpMode() throws InterruptedException {

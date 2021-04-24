@@ -15,11 +15,14 @@ import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
  * This is a simple routine to test translational drive capabilities.
  */
 @Config
-@Disabled
 @Autonomous(group = "drive")
 public class StrafeTest extends LinearOpMode {
     public static double DISTANCE = 60; // in
 
+    //Trial 1 with p=20 i=1.8 d=14  DISTANCE was 42
+            //biiig drift tho
+    //Trial 2 with p=20 i=1.8 d=14  DISTANCE was 46
+    //Trial 3 with p=20 i=1.8 d=14  DISTANCE was 45.5
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -27,7 +30,7 @@ public class StrafeTest extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         Trajectory trajectory = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(DISTANCE)
+                .strafeLeft(DISTANCE)
                 .build();
 
         waitForStart();

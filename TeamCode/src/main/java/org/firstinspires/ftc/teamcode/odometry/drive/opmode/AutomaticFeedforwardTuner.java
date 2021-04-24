@@ -33,7 +33,6 @@ import static org.firstinspires.ftc.teamcode.odometry.drive.DriveConstants.rpmTo
  *      regression.
  */
 @Config
-@Disabled
 @Autonomous(group = "drive")
 public class AutomaticFeedforwardTuner extends LinearOpMode {
     public static double MAX_POWER = 0.7;
