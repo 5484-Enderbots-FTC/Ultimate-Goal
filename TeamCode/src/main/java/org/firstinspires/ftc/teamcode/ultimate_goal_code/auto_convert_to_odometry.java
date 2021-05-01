@@ -21,16 +21,22 @@
 
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.State;
+import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -42,8 +48,8 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-@Autonomous(name = "wobble shoot park FSM", group = "auto")
-public class auto_wobble_shoot_park_FSM extends LinearOpMode {
+@Autonomous(name = "odometry pog", group = "auto")
+public class auto_convert_to_odometry extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
 
@@ -53,12 +59,19 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
 
     //motors
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
+    //odometry
+
 
     State currentState;
 
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
+
+
+    double timeBetweenShots = 0.7;
+    double normalFlywheelVelocity = 1350;
 
     double magDown = 0.85;
     double magUp = 0.58;
@@ -92,8 +105,8 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
         robot.init(hardwareMap);
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         //openCV config
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -104,6 +117,48 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
         );
 
+        //Shooter PID config
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+        //PID motor config
+        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        robot.mtrFlywheel.setMotorType(motorConfigurationType);
+
+        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
+
+        //odometry paths
+        Pose2d startPose = new Pose2d(-66, -10, 0);
+        drive.setPoseEstimate(startPose);
+
+        //shooting trajectory:
+        Trajectory toShoot1 = drive.trajectoryBuilder(new Pose2d())
+                .splineToConstantHeading(new Vector2d(0,-30), Math.toRadians(0))
+                .build();
+
+
+        //No Ring trajectories:
+        Trajectory noRing1 = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0,0,Math.toRadians(6))))
+                .strafeTo(new Vector2d(-14, -50))
+                .build();
+
+        Trajectory noRing2 = drive.trajectoryBuilder(noRing1.end())
+                .strafeTo(new Vector2d(-14, -35))
+                .build();
+
+        Trajectory noRing3 = drive.trajectoryBuilder(noRing2.end())
+                .lineToConstantHeading(new Vector2d(5, -35))
+                .build();
+
+        //1 ring trajectories:
+
+
+        //4 rings trajectories:
+
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Analysis", pipeline.getAnalysis());
@@ -113,8 +168,13 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         waitForStart();
         currentState = State.DETECT_RING_STACK;
 
-        while (!isStopRequested() && opModeIsActive()) {
+        Pose2d poseEstimate = drive.getPoseEstimate();
+        telemetry.addData("finalX", poseEstimate.getX());
+        telemetry.addData("finalY", poseEstimate.getY());
+        telemetry.addData("finalHeading", poseEstimate.getHeading());
+        telemetry.update();
 
+        while (!isStopRequested() && opModeIsActive()) {
 
             if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE)) {
                 telemetry.addLine("Zone A, no rings");
@@ -146,6 +206,26 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                     telemetry.addData("Analysis", pipeline.getAnalysis());
                     telemetry.addData("Position", pipeline.position);
                     telemetry.update();
+
+                    //go to shoot
+                    drive.followTrajectory(toShoot1);
+                    //correct to shoot angle
+                    drive.turn(Math.toRadians(6));
+                    //shoot
+                    robot.svoMagLift.setPosition(magUp);
+                    shootThree(timeBetweenShots);
+                    robot.svoMagLift.setPosition(magDown);
+                    //go to zone A
+                    drive.followTrajectory(noRing1);
+                    //bye bye wobble
+                    robot.svoWobble.setPosition(wobbleRelease);
+                    waitFor(1);
+                    //go park dummie
+                    drive.followTrajectory(noRing2);
+                    waitFor(1);
+                    drive.followTrajectory(noRing3);
+
+                    /*
                     //forward to shooting pos whereever the donde that is lol and shoot shoot
                     encoderForwardNoBrake(0.6, 46);
                     encoderForward(0.2, 15);
@@ -168,6 +248,8 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                     encoderForward(-0.4, -6);
                     encoderStrafe(-0.4, -28);
                     encoderForward(0.6, 17);
+                     */
+
                     currentState = State.STOP;
 
                     break;
@@ -352,12 +434,12 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     }
 
     private void shootThree(double inBetweenRingTime) {
-        robot.mtrFlywheel.setPower(flywheelPower);
+        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
         waitFor(1.4);
         pushARing();
         waitFor(inBetweenRingTime);
         pushARing();
-        waitFor(inBetweenRingTime - 0.07);
+        waitFor(inBetweenRingTime);
         pushARing();
         waitFor(inBetweenRingTime);
         robot.mtrFlywheel.setPower(0);
@@ -454,6 +536,12 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         mtrFRisBusy();
         brakeMotors();
         runWithoutEncoder();
+    }
+
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
+        ));
     }
 
 

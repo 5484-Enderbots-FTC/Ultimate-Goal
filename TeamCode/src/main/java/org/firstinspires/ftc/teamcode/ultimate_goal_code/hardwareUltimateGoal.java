@@ -4,19 +4,21 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 public class hardwareUltimateGoal {
 
     DcMotorEx mtrBL, mtrBR, mtrFL, mtrFR, mtrIntake, mtrWobble, mtrFlywheel = null;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
+    TouchSensor topLimit;
     VoltageSensor batteryVoltageSensor;
     HardwareMap hwMap = null;
 
     double ringPushIn = 0.75;
     double magDown = 0.85;
     double wobbleHold = 0.2;
-    double forkHold = 0.8;
+    double forkHold = 0.95;
 
     public hardwareUltimateGoal() {
 
@@ -66,6 +68,8 @@ public class hardwareUltimateGoal {
 
         svoForkHold = hwMap.get(Servo.class, "svoForkHold");
         svoForkHold.setDirection(Servo.Direction.FORWARD);
+
+        topLimit = hwMap.get(TouchSensor.class, "topLimit");
 
         svoRingPush.setPosition(ringPushIn);
         svoMagLift.setPosition(magDown);

@@ -6,7 +6,6 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
@@ -16,7 +15,7 @@ import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
  */
 @Config
 @Autonomous(group = "drive")
-public class StrafeTest extends LinearOpMode {
+public class StrafeLeftTest extends LinearOpMode {
     public static double DISTANCE = 60; // in
 
     //Trial 1 with p=20 i=1.8 d=14  DISTANCE was 42
@@ -30,7 +29,7 @@ public class StrafeTest extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         Trajectory trajectory = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(DISTANCE)
+                .strafeLeft(DISTANCE)
                 .build();
 
         waitForStart();

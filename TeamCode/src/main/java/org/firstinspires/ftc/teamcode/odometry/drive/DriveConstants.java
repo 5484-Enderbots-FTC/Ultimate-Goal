@@ -39,11 +39,10 @@ public class DriveConstants {
      */
     public static final boolean RUN_USING_ENCODER = true;
     //kV = 0.03452, kStatic = 0.34652
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(20, 1.8, 14,
-      getMotorVelocityF(MAX_RPM / 60 * TICKS_PER_REV));
-
-    //p= 20 i= 1.8  d= 14
-
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(35, 0, 12,16.855974264705882);
+    // OLD p= 20 i= 1.8  d= 14
+    //OLD f =   getMotorVelocityF(MAX_RPM / 60 * TICKS_PER_REV)
+    // NEW p= 35 i= 0 d= 12 f= 16.855974264705882
     /*
      * These are physical constants that can be determined from your robot (including the track
      * width; it will be tune empirically later although a rough estimate is important). Users are
