@@ -119,9 +119,9 @@ public class teleop_control_pid extends LinearOpMode {
             telemetry.addData("error", targetVelo - motorVelo);
 
              */
-            telemetry.addData("topLimit: ", robot.topLimit.isPressed());
+            telemetry.addData("topLimit: ", robot.topLimit);
             telemetry.update();
-            if(robot.topLimit.isPressed()){
+            if(robot.topLimit.getState() == true){
                 robot.mtrIntake.setPower(1);
             }
 

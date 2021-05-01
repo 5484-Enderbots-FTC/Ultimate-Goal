@@ -2,16 +2,16 @@ package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 public class hardwareUltimateGoal {
 
     DcMotorEx mtrBL, mtrBR, mtrFL, mtrFR, mtrIntake, mtrWobble, mtrFlywheel = null;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
-    TouchSensor topLimit;
+    DigitalChannel topLimit;
     VoltageSensor batteryVoltageSensor;
     HardwareMap hwMap = null;
 
@@ -69,7 +69,8 @@ public class hardwareUltimateGoal {
         svoForkHold = hwMap.get(Servo.class, "svoForkHold");
         svoForkHold.setDirection(Servo.Direction.FORWARD);
 
-        topLimit = hwMap.get(TouchSensor.class, "topLimit");
+        topLimit = hwMap.get(DigitalChannel.class, "topLimit");
+        topLimit.setMode(DigitalChannel.Mode.INPUT);
 
         svoRingPush.setPosition(ringPushIn);
         svoMagLift.setPosition(magDown);
