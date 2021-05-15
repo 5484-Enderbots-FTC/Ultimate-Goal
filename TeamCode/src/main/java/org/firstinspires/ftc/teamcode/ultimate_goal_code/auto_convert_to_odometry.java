@@ -129,7 +129,9 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
         setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
 
-        //odometry paths
+        /***
+         *               ODOMETRY TRAJECTORIES
+         */
         Pose2d startPose = new Pose2d(-66, -10, 0);
         drive.setPoseEstimate(startPose);
 
@@ -138,25 +140,57 @@ public class auto_convert_to_odometry extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(0,-30), Math.toRadians(0))
                 .build();
 
+        //shoot to go around ring stack lmao
+        Trajectory toShoot2 = drive.trajectoryBuilder(new Pose2d())
+                .lineToConstantHeading(new Vector2d(-5,-10))
+                .build();
+        Trajectory toShoot3 = drive.trajectoryBuilder(toShoot2.end())
+                .strafeTo(new Vector2d(-3,-30))
+                .build();
 
-        //No Ring trajectories:
+
+        /***
+         * NO RING
+         */
+        //strafe to align with A
         Trajectory noRing1 = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0,0,Math.toRadians(6))))
-                .strafeTo(new Vector2d(-14, -50))
+                .strafeTo(new Vector2d(-6, -50))
                 .build();
-
+        //strafe over
         Trajectory noRing2 = drive.trajectoryBuilder(noRing1.end())
-                .strafeTo(new Vector2d(-14, -35))
+                .strafeTo(new Vector2d(-6, -35))
                 .build();
-
+        //go to park :3
         Trajectory noRing3 = drive.trajectoryBuilder(noRing2.end())
                 .lineToConstantHeading(new Vector2d(5, -35))
                 .build();
 
-        //1 ring trajectories:
+        /***
+         * ONE RING
+         */
+
+        //spline to align with B
+        Trajectory oneRing1 = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0,0,Math.toRadians(6))))
+                .lineToConstantHeading(new Vector2d(20,-20))
+                .build();
+        //park
+        Trajectory oneRing2 = drive.trajectoryBuilder(oneRing1.end(),true)
+                .lineToConstantHeading(new Vector2d(5,-35))
+                .build();
 
 
-        //4 rings trajectories:
 
+        /***
+         * FOUR RINGs
+         */
+        //spline to align with C
+        Trajectory fourRings1 = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0,0,Math.toRadians(6))))
+                .splineToConstantHeading(new Vector2d(35,-43), Math.toRadians(0))
+                .build();
+        //spline back up to park
+        Trajectory fourRings2 = drive.trajectoryBuilder(fourRings1.end(),true)
+                .splineToConstantHeading(new Vector2d(5,-35), Math.toRadians(0))
+                .build();
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.addData("Status", "Initialized");
@@ -167,12 +201,6 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
         waitForStart();
         currentState = State.DETECT_RING_STACK;
-
-        Pose2d poseEstimate = drive.getPoseEstimate();
-        telemetry.addData("finalX", poseEstimate.getX());
-        telemetry.addData("finalY", poseEstimate.getY());
-        telemetry.addData("finalHeading", poseEstimate.getHeading());
-        telemetry.update();
 
         while (!isStopRequested() && opModeIsActive()) {
 
@@ -192,128 +220,134 @@ public class auto_convert_to_odometry extends LinearOpMode {
                 case DETECT_RING_STACK:
                     if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
                         targetZone = Zone.A;
+                        telemetry.addLine("Zone A, no rings");
+                        telemetry.addData("Analysis", pipeline.getAnalysis());
+                        telemetry.addData("Position", pipeline.position);
+                        telemetry.update();
                         currentState = State.NO_RINGS;
                     } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
                         targetZone = Zone.B;
+                        telemetry.addLine("Zone B, one ring");
+                        telemetry.addData("Analysis", pipeline.getAnalysis());
+                        telemetry.addData("Position", pipeline.position);
+                        telemetry.update();
                         currentState = State.ONE_RING;
                     } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
                         targetZone = Zone.C;
+                        telemetry.addLine("Zone C, four rings");
+                        telemetry.addData("Analysis", pipeline.getAnalysis());
+                        telemetry.addData("Position", pipeline.position);
+                        telemetry.update();
                         currentState = State.FOUR_RINGS;
                     }
                     break;
                 case NO_RINGS:
-                    telemetry.addLine("Zone A, no rings");
-                    telemetry.addData("Analysis", pipeline.getAnalysis());
-                    telemetry.addData("Position", pipeline.position);
-                    telemetry.update();
+                    if(!isStopRequested()) {
+                        telemetry.addLine("Zone A, no rings");
+                        telemetry.addData("Analysis", pipeline.getAnalysis());
+                        telemetry.addData("Position", pipeline.position);
+                        telemetry.update();
 
-                    //go to shoot
-                    drive.followTrajectory(toShoot1);
-                    //correct to shoot angle
-                    drive.turn(Math.toRadians(6));
-                    //shoot
-                    robot.svoMagLift.setPosition(magUp);
-                    shootThree(timeBetweenShots);
-                    robot.svoMagLift.setPosition(magDown);
-                    //go to zone A
-                    drive.followTrajectory(noRing1);
-                    //bye bye wobble
-                    robot.svoWobble.setPosition(wobbleRelease);
-                    waitFor(1);
-                    //go park dummie
-                    drive.followTrajectory(noRing2);
-                    waitFor(1);
-                    drive.followTrajectory(noRing3);
+                        //go to shoot
+                        drive.followTrajectory(toShoot1);
 
-                    /*
-                    //forward to shooting pos whereever the donde that is lol and shoot shoot
-                    encoderForwardNoBrake(0.6, 46);
-                    encoderForward(0.2, 15);
-                    encoderStrafe(0.3, 12);
-                    robot.svoMagLift.setPosition(magUp);
-                    shootThree(0.6);
-                    robot.svoMagLift.setPosition(magDown);
+                        //correct to shoot angle
+                        drive.turn(Math.toRadians(6));
 
-                    // nav to zone a
-                    encoderStrafe(0.4, 40);
-                    robot.svoWobble.setPosition(wobbleRelease);
-                    waitFor(1);
-                    //back up to second wobble (no rings so navigate however)
+                        //shoot
+                        robot.svoMagLift.setPosition(magUp);
+                        shootThree(timeBetweenShots);
+                        robot.svoMagLift.setPosition(magDown);
 
-                    //180 spin spin
+                        //go to zone A
+                        drive.followTrajectory(noRing1);
+                        //bye bye wobble
+                        robot.svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
 
-                    //drop it like its hot
+                        //go park dummie
+                        drive.followTrajectory(noRing2);
+                        waitFor(0.5);
+                        drive.followTrajectory(noRing3);
 
-                    //park
-                    encoderForward(-0.4, -6);
-                    encoderStrafe(-0.4, -28);
-                    encoderForward(0.6, 17);
-                     */
-
-                    currentState = State.STOP;
-
+                        //stahp
+                        currentState = State.STOP;
+                    }
                     break;
                 case ONE_RING:
-                    telemetry.addLine("Zone B, one ring");
-                    telemetry.addData("Analysis", pipeline.getAnalysis());
-                    telemetry.addData("Position", pipeline.position);
-                    telemetry.update();
-                    //forward to shooting pos donde estas and brrrr
-                    encoderForwardNoBrake(0.6, 46);
-                    encoderForward(0.2, 15);
-                    encoderStrafe(0.2, 12);
-                    robot.svoMagLift.setPosition(magUp);
-                    shootThree(0.6);
-                    robot.svoMagLift.setPosition(magDown);
+                    if(!isStopRequested()) {
+                        telemetry.addLine("Zone B, one ring");
+                        telemetry.addData("Analysis", pipeline.getAnalysis());
+                        telemetry.addData("Position", pipeline.position);
+                        telemetry.update();
 
-                    //nav to zone b and rain drop drop top
-                    encoderStrafe(0.2, 4);
-                    encoderForward(0.6, 21);
-                    robot.svoWobble.setPosition(wobbleRelease);
-                    waitFor(1);
+                        //go to shoot
+                        drive.followTrajectory(toShoot2);
+                        waitFor(1);
+                        drive.followTrajectory(toShoot3);
 
-                    //back up to second wobble
+                        //correct to shoot angle
+                        drive.turn(Math.toRadians(6));
 
-                    //scooch over and forward to the single ring and turn on the intake and yOink
+                        //shoot
+                        robot.svoMagLift.setPosition(magUp);
+                        shootThree(timeBetweenShots);
+                        robot.svoMagLift.setPosition(magDown);
 
-                    //tHEn 180 woosh
+                        //nav to zone b
+                        drive.followTrajectory(oneRing1);
 
-                    //drip drop
+                        //raindrop drop top
+                        robot.svoWobble.setPosition(wobbleRelease);
+                        waitFor(1);
 
-                    //park
-                    encoderForward(-0.6, -5);
-                    currentState = State.STOP;
+                        //go park dummie
+                        drive.followTrajectory(oneRing2);
+
+                        //back up to second wobble
+
+                        //scooch over and forward to the single ring and turn on the intake and yOink
+
+                        //tHEn 180 woosh
+
+                        //drip drop
+
+                        //park
+
+                        currentState = State.STOP;
+                    }
                     break;
 
                 case FOUR_RINGS:
-                    telemetry.addLine("Zone C, four rings");
-                    telemetry.addData("Analysis", pipeline.getAnalysis());
-                    telemetry.addData("Position", pipeline.position);
-                    telemetry.update();
-                    //forward to shooter babey skrrrAH
-                    encoderForwardNoBrake(0.6, 46);
-                    encoderForward(0.2, 15);
-                    encoderStrafe(0.2, 12);
-                    robot.svoMagLift.setPosition(magUp);
-                    shootThree(0.6);
-                    robot.svoMagLift.setPosition(magDown);
+                    if(!isStopRequested()) {
+                        telemetry.addLine("Zone C, four rings");
+                        telemetry.addData("Analysis", pipeline.getAnalysis());
+                        telemetry.addData("Position", pipeline.position);
+                        telemetry.update();
+                        //go to shoot
+                        drive.followTrajectory(toShoot2);
+                        waitFor(1);
+                        drive.followTrajectory(toShoot3);
 
-                    //nav to zone c lol
-                    encoderStrafe(0.3, 40);
-                    encoderForwardNoBrake(0.6, 46);
-                    encoderForward(0.6, 6);
-                    robot.svoWobble.setPosition(wobbleRelease);
-                    waitFor(1);
+                        //correct to shoot angle
+                        drive.turn(Math.toRadians(6));
 
-                    //then back that ass straight tf up along the wall then strafe at the right point to pick up wobble dos
+                        //shoot
+                        robot.svoMagLift.setPosition(magUp);
+                        shootThree(timeBetweenShots);
+                        robot.svoMagLift.setPosition(magDown);
 
-                    //180 babey
+                        //nav to zone C
+                        drive.followTrajectory(fourRings1);
+                        //bye bye wobble
+                        robot.svoWobble.setPosition(wobbleRelease);
 
-                    //zone c again
+                        //go park dummie
+                        waitFor(0.5);
+                        drive.followTrajectory(fourRings2);
 
-                    //park
-                    encoderForward(-0.6, -35);
-                    currentState = State.STOP;
+                        currentState = State.STOP;
+                    }
                     break;
 
                 case STOP:
@@ -340,19 +374,28 @@ public class auto_convert_to_odometry extends LinearOpMode {
         static final Scalar BLUE = new Scalar(0, 0, 255, 255);
         static final Scalar GREEN = new Scalar(0, 255, 0, 255);
 
-        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(210, 135);
+        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(210, 124);
+        /**
+         *              (0,0).--------------x--------------> x = 320
+         *                   |                                .
+         *                   |                                .
+         *                   y                                .
+         *                   |                                .
+         *                   |                                .
+         *                  \/                                .
+         *                y = 240 . . . . . . . . . . . . . . .
+         */
 
         static final int REGION_WIDTH = 25;
         static final int REGION_HEIGHT = 30;
 
-        final int FOUR_RING_THRESHOLD = 170;
-        //before: 150
-        //182
+        final int FOUR_RING_THRESHOLD = 165;
+        //170 actual field
+        //150 ben's
 
         final int ONE_RING_THRESHOLD = 150;
-        //before: 135
-        //156
-        //154
+        //150 actual
+        //125 ben's
 
         Point region1_pointA = new Point(
                 REGION1_TOPLEFT_ANCHOR_POINT.x,
@@ -439,7 +482,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
         pushARing();
         waitFor(inBetweenRingTime);
         pushARing();
-        waitFor(inBetweenRingTime);
+        waitFor(inBetweenRingTime+0.3);
         pushARing();
         waitFor(inBetweenRingTime);
         robot.mtrFlywheel.setPower(0);

@@ -21,12 +21,16 @@
 
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -56,10 +60,12 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
 
     State currentState;
 
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
 
+    double normalFlywheelVelocity = 1350;
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
@@ -94,6 +100,23 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     public void runOpMode() {
 
         robot.init(hardwareMap);
+
+        //Velocity PID
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+        //PID motor config
+        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        robot.mtrFlywheel.setMotorType(motorConfigurationType);
+
+        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
+
+
+        //TuningController tuningController = new TuningController();
+
+        //telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         //openCV config
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -258,7 +281,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         static final Scalar BLUE = new Scalar(0, 0, 255, 255);
         static final Scalar GREEN = new Scalar(0, 255, 0, 255);
 
-        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(210, 135);
+        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(210, 126);
 
         static final int REGION_WIDTH = 25;
         static final int REGION_HEIGHT = 30;
@@ -267,7 +290,7 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         //before: 150
         //182
 
-        final int ONE_RING_THRESHOLD = 150;
+        final int ONE_RING_THRESHOLD = 149;
         //before: 135
         //156
         //154
@@ -352,12 +375,12 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     }
 
     private void shootThree(double inBetweenRingTime) {
-        robot.mtrFlywheel.setPower(flywheelPower);
+        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
         waitFor(1.4);
         pushARing();
         waitFor(inBetweenRingTime);
         pushARing();
-        waitFor(inBetweenRingTime - 0.07);
+        waitFor(inBetweenRingTime+0.3);
         pushARing();
         waitFor(inBetweenRingTime);
         robot.mtrFlywheel.setPower(0);
@@ -454,6 +477,11 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
         mtrFRisBusy();
         brakeMotors();
         runWithoutEncoder();
+    }
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
+        ));
     }
 
 
