@@ -34,6 +34,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -98,14 +99,15 @@ import java.util.Locale;
  * @see <a href="https://www.bosch-sensortec.com/bst/products/all_products/bno055">BNO055 product page</a>
  * @see <a href="https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST_BNO055_DS000_14.pdf">BNO055 specification</a>
  */
-@TeleOp(name = "Sensor: BNO055 IMU Calibration", group = "Sensor")
-@Disabled                            // Uncomment this to add to the opmode list
+@TeleOp(name = "Sensor: BNO055 IMU Calibration", group = "10-calibration")
+//@Disabled                            // Uncomment this to add to the opmode list
 public class SensorBNO055IMUCalibration extends LinearOpMode
     {
     //----------------------------------------------------------------------------------------------
     // State
     //----------------------------------------------------------------------------------------------
 
+        DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR;
     // Our sensors, motors, and other devices go here, along with other long term state
     BNO055IMU imu;
 
@@ -117,6 +119,22 @@ public class SensorBNO055IMUCalibration extends LinearOpMode
     //----------------------------------------------------------------------------------------------
 
     @Override public void runOpMode() {
+
+        mtrBL = hardwareMap.get(DcMotorEx.class, "mtrBL");
+        mtrBL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBL.setDirection(DcMotorEx.Direction.REVERSE);
+
+        mtrBR = hardwareMap.get(DcMotorEx.class, "mtrBR");
+        mtrBR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrBR.setDirection(DcMotorEx.Direction.FORWARD);
+
+        mtrFL = hardwareMap.get(DcMotorEx.class, "mtrFL");
+        mtrFL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFL.setDirection(DcMotorEx.Direction.REVERSE);
+
+        mtrFR = hardwareMap.get(DcMotorEx.class, "mtrFR");
+        mtrFR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrFR.setDirection(DcMotorEx.Direction.FORWARD);
 
         telemetry.log().setCapacity(12);
         telemetry.log().add("");
@@ -148,6 +166,10 @@ public class SensorBNO055IMUCalibration extends LinearOpMode
         telemetry.log().add("...started...");
 
         while (opModeIsActive()) {
+            mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+            mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+            mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+            mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
 
             if (gamepad1.a) {
 
