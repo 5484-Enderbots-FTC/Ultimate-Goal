@@ -37,8 +37,8 @@ public class teleop_control_pid extends LinearOpMode {
 
      */
 
-    double timeBetweenShots = 0.24;
-    double servoMoveTime = 0.2;
+    double timeBetweenShots = 0.37;
+    double servoMoveTime = 0.25;
 
     double normalFlywheelVelocity = 1350;
     double psFlywheelVelocity = 1200;
@@ -51,7 +51,7 @@ public class teleop_control_pid extends LinearOpMode {
     double wobbleRelease = 0.37;
     double wobbleHold = 0.2;
     double forkHold = 0.75;
-    double initFork = 0.95;
+    double initFork = 0.91;
     double forkRelease = 0.5;
     double toggleWaitTime = 0.5;
 
