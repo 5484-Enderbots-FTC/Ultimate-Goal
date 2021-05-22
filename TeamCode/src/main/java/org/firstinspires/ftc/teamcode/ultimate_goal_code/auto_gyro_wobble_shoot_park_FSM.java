@@ -24,6 +24,7 @@ package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -47,6 +48,7 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
+@Disabled
 @Autonomous(name = "wobble shoot park w gyro", group = "auto")
 public class auto_gyro_wobble_shoot_park_FSM extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();

@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.openftc.easyopencv.OpenCvCamera;
-
+@Disabled
 @Autonomous(name = "encoder test cri", group = "auto")
 public class encoder_testing_i_hate_it_here extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
