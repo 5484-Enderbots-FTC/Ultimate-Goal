@@ -74,6 +74,8 @@ public class auto_convert_to_odometry extends LinearOpMode {
     double timeBetweenShots = 0.7;
     double normalFlywheelVelocity = 1350;
 
+    double shootAngleCorrection = 0;
+
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
@@ -161,9 +163,12 @@ public class auto_convert_to_odometry extends LinearOpMode {
          * NO RING
          */
         //strafe to align with A
-        Trajectory noRingToA = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0, 0, Math.toRadians(0))))
+        Trajectory noRingToA = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0, 0, Math.toRadians(shootAngleCorrection))))
                 .strafeTo(
                         new Vector2d(-6, -55)
+                        /***
+                         * ^^ need to adjust them coordinate to be more into the box so the wobbles don't collide :P
+                         */
                 )
                 .build();
         //to the second wobble
@@ -181,14 +186,25 @@ public class auto_convert_to_odometry extends LinearOpMode {
         Trajectory noRingToA2 = drive.trajectoryBuilder(noRingToWobble.end())
                 .splineToLinearHeading(
                         new Pose2d(-6, -55, Math.toRadians(180)), Math.toRadians(0))
+                /***
+                 * ^^ need to adjust the 180 spin move cuz it goes a little too far for my liking
+                 */
                 .addTemporalMarker(1, () -> {
                     robot.mtrWobble.setPower(-0.15);
                 })
                 .build();
 
-        Trajectory noRingToPark1 = drive.trajectoryBuilder(noRingToA2.end())
+        Trajectory noRingToPark = drive.trajectoryBuilder(noRingToA2.end())
                 .lineToConstantHeading(
-                        new Vector2d(-15, -50)
+                        new Vector2d(-18, -55),
+                        SampleMecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .lineToConstantHeading(
+                        new Vector2d(-18, -35)
+                )
+                .lineToConstantHeading(
+                        new Vector2d(5, -35)
                 )
                 .build();
 
@@ -326,18 +342,10 @@ public class auto_convert_to_odometry extends LinearOpMode {
                          * stopped here - went down infinitely with that dummie wait command cri fix it- maybe with limit switches?
                          */
                         waitFor(2);
+                        robot.mtrWobble.setPower(0);
 
                         //el parque :DDD
-
-
-
-                        /*
-                        //go park dummie
-                        drive.followTrajectory(noRing2);
-                        waitFor(0.5);
-                        drive.followTrajectory(noRing3);
-
-                         */
+                        drive.followTrajectory(noRingToPark);
 
                         //stahp
                         currentState = State.STOP;
