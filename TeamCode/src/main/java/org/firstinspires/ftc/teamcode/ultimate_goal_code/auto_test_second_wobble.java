@@ -74,6 +74,8 @@ public class auto_test_second_wobble extends LinearOpMode {
     double forkRelease = 0.5;
     double flywheelPower = 0.614;
 
+    boolean wobbleLifted = false;
+
     public static class var {
         private static int RingStackIndentified = 0;
     }
@@ -130,20 +132,31 @@ public class auto_test_second_wobble extends LinearOpMode {
 
         waitForStart();
 
-        while (!isStopRequested() && opModeIsActive()) {
+        telemetry.addData("topLimit: ", robot.topLimit.getState());
+        telemetry.update();
 
-            robot.svoForkHold.setPosition(forkRelease);
-            //encoderForward(0.4,5);
-            //waitFor(0.5);
-            //encoderForward(-0.4,-10);
+        robot.svoForkHold.setPosition(forkRelease);
 
-            robot.mtrWobble.setPower(0.2);
-            Thread.sleep(1000);
-
-            //wobbleUp(1,-0.2);
-            //robot.mtrWobble.setPower(0.05);
-
+        robot.mtrWobble.setPower(-0.2);
+        waitFor(2);
+        wobbleLifted = true;
+        while (wobbleLifted == true) {
+            robot.mtrWobble.setPower(-0.15);
+            robot.svoMagLift.setPosition(magUp);
+            waitFor(3);
+            robot.svoMagLift.setPosition(magDown);
+            break;
         }
+
+        //encoderUp(0.2, 20);
+        //waitFor(0.5);
+
+        //robot.mtrFlywheel.setPower(-0.5);
+        //waitFor(2);
+        //robot.mtrFlywheel.setPower(0);
+        //robot.mtrWobble.setPower(0.2);
+        //Thread.sleep(1000);
+
     }
 
 
@@ -245,7 +258,16 @@ public class auto_test_second_wobble extends LinearOpMode {
         }
     }
 
-    private void wobbleUp(double seconds, double power){
+    private void waitWhileLimit(double waittime) {
+        timer.reset();
+        while (timer.seconds() < waittime) {
+            if (robot.topLimit.getState() == true) {
+                robot.mtrWobble.setPower(0);
+            }
+        }
+    }
+
+    private void wobbleUp(double seconds, double power) {
         currentState = State.LIFT_UP;
 
         switch (currentState) {
@@ -253,10 +275,9 @@ public class auto_test_second_wobble extends LinearOpMode {
             case LIFT_UP:
 
                 wobbleTimer.reset();
-                if(wobbleTimer.seconds() < seconds){
+                if (wobbleTimer.seconds() < seconds) {
                     robot.mtrWobble.setPower(power);
-                }
-                else{
+                } else {
                     currentState = State.STOP;
                 }
                 telemetry.addData("Status", "WobbleTimer: " + wobbleTimer.toString());
@@ -280,7 +301,7 @@ public class auto_test_second_wobble extends LinearOpMode {
         pushARing();
         waitFor(inBetweenRingTime);
         pushARing();
-        waitFor(inBetweenRingTime+0.3);
+        waitFor(inBetweenRingTime + 0.3);
         pushARing();
         waitFor(inBetweenRingTime);
         robot.mtrFlywheel.setPower(0);
@@ -288,92 +309,41 @@ public class auto_test_second_wobble extends LinearOpMode {
     }
 
     private void resetEncoders() {
-        robot.mtrFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mtrFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mtrBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mtrBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mtrWobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     private void runToPosition() {
-        robot.mtrFR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.mtrFL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.mtrBR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.mtrBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        robot.mtrWobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     private void brakeMotors() {
-        robot.mtrFL.setPower(0);
-        robot.mtrFR.setPower(0);
-        robot.mtrBL.setPower(0);
-        robot.mtrBR.setPower(0);
+        robot.mtrWobble.setPower(0);
+
     }
 
     private void mtrFRisBusy() {
-        while (robot.mtrFR.isBusy()) {
+        while (robot.mtrWobble.isBusy()) {
         }
     }
 
     private void runWithoutEncoder() {
-        robot.mtrFR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.mtrFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.mtrBR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.mtrBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.mtrWobble.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
     }
 
     private void forward(double power) {
-        robot.mtrBL.setPower(power);
-        robot.mtrBR.setPower(power);
-        robot.mtrFL.setPower(power);
-        robot.mtrFR.setPower(power);
-
-
+        robot.mtrWobble.setPower(-power);
     }
 
-    private void forwardPosition(int distance_inches) {
-        robot.mtrBL.setTargetPosition(distance_inches * (int) ticksPerInchCalibrated);
-        robot.mtrBR.setTargetPosition(distance_inches * (int) ticksPerInchCalibrated);
-        robot.mtrFL.setTargetPosition(distance_inches * (int) ticksPerInchCalibrated);
-        robot.mtrFR.setTargetPosition(distance_inches * (int) ticksPerInchCalibrated);
+    private void forwardPosition(int ticks) {
+        robot.mtrWobble.setTargetPosition(-ticks);
     }
 
-    private void encoderForward(double power, int distance_inches) {
+    private void encoderUp(double power, int ticks) {
         resetEncoders();
-        forwardPosition(-distance_inches);
+        forwardPosition(ticks);
         runToPosition();
         forward(power);
-        mtrFRisBusy();
-        brakeMotors();
-        runWithoutEncoder();
-    }
-
-    private void encoderForwardNoBrake(double power, int distance_inches) {
-        resetEncoders();
-        forwardPosition(-distance_inches);
-        runToPosition();
-        forward(power);
-        mtrFRisBusy();
-        runWithoutEncoder();
-    }
-
-    private void strafe(double power) {
-        robot.mtrBL.setPower(power);
-        robot.mtrBR.setPower(-power);
-        robot.mtrFL.setPower(-power);
-        robot.mtrFR.setPower(power);
-    }
-
-    private void strafePosition(int distance_inches) {
-        robot.mtrBL.setTargetPosition(distance_inches * (int) ticksPerInchCalibrated);
-        robot.mtrBR.setTargetPosition(-distance_inches * (int) ticksPerInchCalibrated);
-        robot.mtrFL.setTargetPosition(-distance_inches * (int) ticksPerInchCalibrated);
-        robot.mtrFR.setTargetPosition(distance_inches * (int) ticksPerInchCalibrated);
-    }
-
-    private void encoderStrafe(double power, int distance_inches) {
-        resetEncoders();
-        strafePosition(distance_inches);
-        runToPosition();
-        strafe(power);
         mtrFRisBusy();
         brakeMotors();
         runWithoutEncoder();

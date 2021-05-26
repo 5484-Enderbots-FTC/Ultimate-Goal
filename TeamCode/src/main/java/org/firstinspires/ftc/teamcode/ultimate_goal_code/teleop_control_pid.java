@@ -51,7 +51,8 @@ public class teleop_control_pid extends LinearOpMode {
     double wobbleRelease = 0.37;
     double wobbleHold = 0.2;
     double forkHold = 0.75;
-    double initFork = 0.91;
+    double initFork = 0.85;
+    double forkRaise = 0.79;
     double forkRelease = 0.5;
     double toggleWaitTime = 0.5;
 
@@ -302,7 +303,7 @@ public class teleop_control_pid extends LinearOpMode {
             if(gamepad2.left_trigger > 0.1){
                 robot.svoForkHold.setPosition(forkRelease);
                 waitFor(1);
-                robot.svoForkHold.setPosition(initFork);
+                robot.svoForkHold.setPosition(forkRaise);
             }
             if(gamepad2.y){
                 robot.svoForkHold.setPosition(initFork);
