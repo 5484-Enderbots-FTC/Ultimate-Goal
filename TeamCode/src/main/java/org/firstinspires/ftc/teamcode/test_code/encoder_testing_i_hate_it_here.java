@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.ultimate_goal_code;
+package org.firstinspires.ftc.teamcode.test_code;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -9,28 +9,23 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.openftc.easyopencv.OpenCvCamera;
-
-@Autonomous(name = "shoot three", group = "auto")
 @Disabled
-public class auto_shooter_three_test extends LinearOpMode {
+@Autonomous(name = "encoder test cri", group = "auto")
+public class encoder_testing_i_hate_it_here extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
-
-    //OpenCV stuff
-    OpenCvCamera webcam;
-    auto_wobble_shoot_park_FSM.RingStackDeterminationPipeline pipeline;
 
     //motors
     DcMotorEx mtrBL , mtrBR , mtrFL , mtrFR , mtrIntake, mtrWobble, mtrFlywheel;
     Servo svoWobble, svoMagLift, svoRingPush;
 
-    auto_wobble_shoot_park_FSM.State currentState;
-
-
     //constants
-    private final double ticksPerMm = 1.68240559922;
-    private final double ticksPerInchCalibratedOld = 1.518268;
-    private final double ticksPerInchCalibrated = 3.6422;
+    private final double ticksPerInchCalibrated = 43.3305;
+
+    private final double ticksPerInchWobbleLift = 1.546;
+    //now in mm!
+
+    //wheel*pi*encoderticks = 3621.99
 
     double magDown = 0.85;
     double magUp = 0.58;
@@ -66,6 +61,10 @@ public class auto_shooter_three_test extends LinearOpMode {
         mtrFlywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         mtrFlywheel.setDirection(DcMotorEx.Direction.REVERSE);
 
+        mtrWobble = hardwareMap.get(DcMotorEx.class, "mtrWobble");
+        mtrWobble.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        mtrWobble.setDirection(DcMotorEx.Direction.REVERSE);
+
         svoMagLift = hardwareMap.get(Servo.class,"svoMagLift");
         svoMagLift.setDirection(Servo.Direction.FORWARD);
 
@@ -80,18 +79,30 @@ public class auto_shooter_three_test extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        while(opModeIsActive()){
-            runtime.reset();
 
-            //encoderForward(0,0);
-            shootThree(1);
-        }
+            runtime.reset();
+           //encoderForward(0.5,12);
+           //what it was supposed to go: 12inches
+            //what it went:
+            //what the tick value was: 91.44
+            //what i changed it to: 43.0305
+
+        //encoderLiftUp(0.4,25);
+        liftUp(0.5,0.4);
+        waitFor(2);
+        liftUp(-0.5, 0.4);
 
 
     }
     private void waitFor(double waittime) {
         timer.reset();
         while (timer.seconds() < waittime) {
+        }
+    }
+    private void liftUp (double power, double seconds){
+        timer.reset();
+        while (timer.seconds() < seconds) {
+            mtrWobble.setPower(power);
         }
     }
 
@@ -117,21 +128,28 @@ public class auto_shooter_three_test extends LinearOpMode {
         mtrFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mtrBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mtrBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
     }
     private void runToPosition() {
         mtrFR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrFL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrBR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         mtrBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
     }
     private void brakeMotors() {
         mtrFL.setPower(0);
         mtrFR.setPower(0);
         mtrBL.setPower(0);
         mtrBR.setPower(0);
+
     }
     private void mtrFRisBusy() {
         while (mtrFR.isBusy()){
+        }
+    }
+    private void mtrWobbleisBusy(){
+        while (mtrWobble.isBusy()){
         }
     }
     private void mtrBLisBusy() {
@@ -143,6 +161,7 @@ public class auto_shooter_three_test extends LinearOpMode {
         mtrFL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrBR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         mtrBL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
     }
 
     private void forward(double power) {
@@ -189,6 +208,23 @@ public class auto_shooter_three_test extends LinearOpMode {
         mtrFRisBusy();
         brakeMotors();
         runWithoutEncoder();
+    }
+
+    private void liftUp(double power){
+
+    }
+    private void liftUpPosition(int distance_inches){
+
+    }
+    private void encoderLiftUp(double power, int distance_inches){
+        mtrWobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mtrWobble.setTargetPosition(6);
+        // mtrWobble.setTargetPosition(distance_inches*(int)ticksPerInchWobbleLift);
+        mtrWobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        mtrWobble.setPower(power);
+        mtrWobbleisBusy();
+        mtrWobble.setPower(0);
+        mtrWobble.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
 
