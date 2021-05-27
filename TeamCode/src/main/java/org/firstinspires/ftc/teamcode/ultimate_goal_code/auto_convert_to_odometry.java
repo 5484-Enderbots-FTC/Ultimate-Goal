@@ -71,19 +71,26 @@ public class auto_convert_to_odometry extends LinearOpMode {
     private final double ticksPerInchCalibrated = 43.3305;
 
 
-    double timeBetweenShots = 0.7;
     double normalFlywheelVelocity = 1350;
 
     double shootAngleCorrection = 0;
+
+    double timeBetweenShots = 0.4;
+    double servoMoveTime = 0.3;
+    double flywheelRevUpTime = 0.85;
+
+    double wobbleGoalPower = -0.2;
+    double counterWobblePower = -0.15;
+    double wobbleDownPower = 0.1;
 
     double magDown = 0.85;
     double magUp = 0.58;
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
-    double wobbleRelease = 0.37;
-    double wobbleHold = 0.2;
+    double wobbleRelease = 0.3;
+    double wobbleHold = 0.19;
     double forkHold = 0.8;
-    double forkRelease = 0.7;
+    double forkRelease = 0.5;
     double flywheelPower = 0.614;
     boolean wobbleLifted = false;
 
@@ -139,22 +146,26 @@ public class auto_convert_to_odometry extends LinearOpMode {
         Pose2d startPose = new Pose2d(-63, -14, 0);
         drive.setPoseEstimate(startPose);
 
-        //shooting trajectory:
-        Trajectory toShoot1 = drive.trajectoryBuilder(new Pose2d())
+        //shooting trajectory for A lol:
+        Trajectory toShootA = drive.trajectoryBuilder(new Pose2d())
                 .splineToConstantHeading(
-                        new Vector2d(0, -30), Math.toRadians(0)
+                        new Vector2d(-3, -30), Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .build();
 
-        //shoot to go around ring stack lmao
-        Trajectory toShoot2 = drive.trajectoryBuilder(new Pose2d())
-                .lineToConstantHeading(
-                        new Vector2d(-5, -10)
+        //shoot to go around ring stack lmao:
+        Trajectory toShootBC = drive.trajectoryBuilder(new Pose2d())
+                .splineToConstantHeading(
+                        new Vector2d(1, -4), Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
-                .build();
-        Trajectory toShoot3 = drive.trajectoryBuilder(toShoot2.end())
-                .strafeTo(
-                        new Vector2d(-3, -30)
+                .splineToConstantHeading(
+                        new Vector2d(-3, -30), Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .build();
 
@@ -162,88 +173,139 @@ public class auto_convert_to_odometry extends LinearOpMode {
         /***
          * NO RING
          */
-        //strafe to align with A
-        Trajectory noRingToA = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0, 0, Math.toRadians(shootAngleCorrection))))
+        Trajectory noRingToA = drive.trajectoryBuilder(toShootA.end().plus(new Pose2d(0, 0, Math.toRadians(shootAngleCorrection))))
                 .strafeTo(
-                        new Vector2d(-6, -55)
-                        /***
-                         * ^^ need to adjust them coordinate to be more into the box so the wobbles don't collide :P
-                         */
+                        new Vector2d(4, -50)
                 )
                 .build();
-        //to the second wobble
+
+
         Trajectory noRingToWobble = drive.trajectoryBuilder(noRingToA.end(), true)
                 .lineToConstantHeading(
-                        new Vector2d(-37, -50),
+                        new Vector2d(-39, -49),
                         SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .addTemporalMarker(0.9, 0.1, () -> {
-                    robot.mtrWobble.setPower(-0.2);
+                    robot.mtrWobble.setPower(wobbleGoalPower);
                 })
                 .build();
+
 
         Trajectory noRingToA2 = drive.trajectoryBuilder(noRingToWobble.end())
                 .splineToLinearHeading(
-                        new Pose2d(-6, -55, Math.toRadians(180)), Math.toRadians(0))
-                /***
-                 * ^^ need to adjust the 180 spin move cuz it goes a little too far for my liking
-                 */
+                        new Pose2d(-3, -55, Math.toRadians(180) + 1e-6), Math.toRadians(0))
                 .addTemporalMarker(1, () -> {
-                    robot.mtrWobble.setPower(-0.15);
+                    robot.mtrWobble.setPower(counterWobblePower);
                 })
                 .build();
 
+
         Trajectory noRingToPark = drive.trajectoryBuilder(noRingToA2.end())
-                .lineToConstantHeading(
-                        new Vector2d(-18, -55),
-                        SampleMecanumDrive.getVelocityConstraint(15, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                .splineToConstantHeading(
+                        new Vector2d(-18, -55), Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(18, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
-                .lineToConstantHeading(
-                        new Vector2d(-18, -35)
+                .splineToConstantHeading(
+                        new Vector2d(-18, -35), Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(25, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
-                .lineToConstantHeading(
-                        new Vector2d(5, -35)
-                )
-                .build();
-
-        //irrelevant:
-        /*
-        //strafe over
-        Trajectory noRing2 = drive.trajectoryBuilder(noRing1.end())
-                .strafeTo(
-                        new Vector2d(-6, -35)
-                )
-                .build();
-        //go to park :3
-        Trajectory noRing3 = drive.trajectoryBuilder(noRing2.end())
-                .lineToConstantHeading(
-                        new Vector2d(5, -35)
+                .splineToConstantHeading(
+                        new Vector2d(9, -35), Math.toRadians(0)
                 )
                 .build();
 
-         */
 
         /***
          * ONE RING
          */
 
         //spline to align with B
-        Trajectory oneRing1 = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0, 0, Math.toRadians(6))))
-                .lineToConstantHeading(new Vector2d(20, -20))
-                .build();
-        //park
-        Trajectory oneRing2 = drive.trajectoryBuilder(oneRing1.end(), true)
-                .lineToConstantHeading(new Vector2d(5, -35))
+        Trajectory oneRingToB = drive.trajectoryBuilder(toShootBC.end().plus(new Pose2d(0, 0, Math.toRadians(shootAngleCorrection))))
+                .lineToConstantHeading(new Vector2d(28, -30))
                 .build();
 
+
+        Trajectory oneRingToWobble1 = drive.trajectoryBuilder(oneRingToB.end())
+                .lineToConstantHeading(
+                        new Vector2d(20, -53),
+                        SampleMecanumDrive.getVelocityConstraint(18, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .build();
+        Trajectory oneRingToWobble2 = drive.trajectoryBuilder(oneRingToWobble1.end(), true)
+                .splineToConstantHeading(
+                        new Vector2d(-8, -53), Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(18, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .build();
+        Trajectory oneRingToWobble3 = drive.trajectoryBuilder(oneRingToWobble2.end(), true)
+                .lineToConstantHeading(
+                        new Vector2d(-39, -51),
+                        SampleMecanumDrive.getVelocityConstraint(18, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .addTemporalMarker(0.88, 0.1, () -> {
+                    robot.mtrWobble.setPower(wobbleGoalPower);
+                })
+                .build();
+
+
+        Trajectory oneRingToShoot = drive.trajectoryBuilder(oneRingToWobble3.end())
+                //go pick up da ring!!!
+                .addDisplacementMarker(()->{
+                    robot.mtrIntake.setPower(1);
+                })
+                .splineToConstantHeading(
+                        new Vector2d(-39, -33),Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .splineToConstantHeading(
+                        new Vector2d(-18, -33),Math.toRadians(0),
+                        SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
+                )
+                .splineToConstantHeading(
+                        new Vector2d(-3, -30),Math.toRadians(0)
+                )
+                .addDisplacementMarker(()->{
+                    waitFor(1);
+                    robot.svoMagLift.setPosition(magUp);
+                    shootOne();
+                    robot.svoMagLift.setPosition(magDown);
+                })
+
+                .addTemporalMarker(1, () -> {
+                    robot.mtrWobble.setPower(counterWobblePower);
+                })
+
+                .build();
+
+
+        Trajectory oneRingToB2 = drive.trajectoryBuilder(oneRingToShoot.end())
+                //then turn around to slap da wobble down umu
+                .splineToLinearHeading(
+                        new Pose2d(20, -30,  Math.toRadians(180) + 1e-6), Math.toRadians(0))
+                .build();
+
+
+        Trajectory oneRingToPark = drive.trajectoryBuilder(oneRingToB2.end())
+                //then turn around to slap da wobble down umu
+                .lineToConstantHeading(
+                        new Vector2d(9, -35)
+                )
+
+                .build();
 
         /***
          * FOUR RINGS
          */
         //spline to align with C
-        Trajectory fourRings1 = drive.trajectoryBuilder(toShoot1.end().plus(new Pose2d(0, 0, Math.toRadians(6))))
+        Trajectory fourRings1 = drive.trajectoryBuilder(toShootA.end().plus(new Pose2d(0, 0, Math.toRadians(shootAngleCorrection))))
                 .splineToConstantHeading(
                         new Vector2d(35, -43), Math.toRadians(0)
                 )
@@ -312,7 +374,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         telemetry.update();
 
                         //go to shoot
-                        drive.followTrajectory(toShoot1);
+                        drive.followTrajectory(toShootA);
 
                         //correct to shoot angle
                         drive.turn(Math.toRadians(0));
@@ -325,6 +387,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         //go to zone A
                         robot.svoForkHold.setPosition(forkRelease);
                         drive.followTrajectory(noRingToA);
+
                         //bye bye wobble
                         robot.svoWobble.setPosition(wobbleRelease);
                         waitFor(1);
@@ -337,11 +400,8 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         drive.followTrajectory(noRingToA2);
 
                         //dROP
-                        robot.mtrWobble.setPower(0.1);
-                        /***
-                         * stopped here - went down infinitely with that dummie wait command cri fix it- maybe with limit switches?
-                         */
-                        waitFor(2);
+                        robot.mtrWobble.setPower(wobbleDownPower);
+                        waitFor(1);
                         robot.mtrWobble.setPower(0);
 
                         //el parque :DDD
@@ -359,12 +419,10 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         telemetry.update();
 
                         //go to shoot
-                        drive.followTrajectory(toShoot2);
-                        waitFor(1);
-                        drive.followTrajectory(toShoot3);
+                        drive.followTrajectory(toShootBC);
 
                         //correct to shoot angle
-                        drive.turn(Math.toRadians(6));
+                        drive.turn(Math.toRadians(shootAngleCorrection));
 
                         //shoot
                         robot.svoMagLift.setPosition(magUp);
@@ -372,25 +430,34 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         robot.svoMagLift.setPosition(magDown);
 
                         //nav to zone b
-                        drive.followTrajectory(oneRing1);
+                        robot.svoForkHold.setPosition(forkRelease);
+                        drive.followTrajectory(oneRingToB);
 
                         //raindrop drop top
                         robot.svoWobble.setPosition(wobbleRelease);
                         waitFor(1);
 
-                        //go park dummie
-                        drive.followTrajectory(oneRing2);
-
-                        //back up to second wobble
+                        //BACKWARDS to second wobble tiem TWO :DDD
+                        drive.followTrajectory(oneRingToWobble1);
+                        waitFor(0.2);
+                        drive.followTrajectory(oneRingToWobble2);
+                        waitFor(0.2);
+                        drive.followTrajectory(oneRingToWobble3);
+                        waitFor(3);
 
                         //scooch over and forward to the single ring and turn on the intake and yOink
+                        drive.followTrajectory(oneRingToShoot);
 
                         //tHEn 180 woosh
+                        drive.followTrajectory(oneRingToB2);
 
                         //drip drop
+                        robot.mtrWobble.setPower(wobbleDownPower);
+                        waitFor(1);
+                        robot.mtrWobble.setPower(0);
 
                         //park
-
+                        drive.followTrajectory(oneRingToPark);
                         currentState = State.STOP;
                     }
                     break;
@@ -402,12 +469,10 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         telemetry.addData("Position", pipeline.position);
                         telemetry.update();
                         //go to shoot
-                        drive.followTrajectory(toShoot2);
-                        waitFor(1);
-                        drive.followTrajectory(toShoot3);
+                        drive.followTrajectory(toShootBC);
 
                         //correct to shoot angle
-                        drive.turn(Math.toRadians(6));
+                        drive.turn(Math.toRadians(shootAngleCorrection));
 
                         //shoot
                         robot.svoMagLift.setPosition(magUp);
@@ -466,11 +531,11 @@ public class auto_convert_to_odometry extends LinearOpMode {
         static final int REGION_WIDTH = 25;
         static final int REGION_HEIGHT = 30;
 
-        final int FOUR_RING_THRESHOLD = 165;
+        final int FOUR_RING_THRESHOLD = 150;
         //170 actual field
         //150 ben's
 
-        final int ONE_RING_THRESHOLD = 150;
+        final int ONE_RING_THRESHOLD = 125;
         //150 actual
         //125 ben's
 
@@ -549,21 +614,28 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
     private void pushARing() {
         robot.svoRingPush.setPosition(ringPushOut);
-        waitFor(0.5);
+        waitFor(servoMoveTime);
         robot.svoRingPush.setPosition(ringPushIn);
     }
 
     private void shootThree(double inBetweenRingTime) {
         robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
-        waitFor(1.4);
+        waitFor(flywheelRevUpTime);
         pushARing();
         waitFor(inBetweenRingTime);
         pushARing();
-        waitFor(inBetweenRingTime + 0.3);
+        waitFor(inBetweenRingTime);
         pushARing();
         waitFor(inBetweenRingTime);
         robot.mtrFlywheel.setPower(0);
 
+    }
+
+    private void shootOne(){
+        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+        waitFor(flywheelRevUpTime);
+        pushARing();
+        robot.mtrFlywheel.setPower(0);
     }
 
     private void resetEncoders() {

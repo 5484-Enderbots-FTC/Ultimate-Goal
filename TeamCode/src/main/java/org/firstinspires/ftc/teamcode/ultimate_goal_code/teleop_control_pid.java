@@ -48,7 +48,7 @@ public class teleop_control_pid extends LinearOpMode {
     double ringPushOut = 0.6;
     double ringPushIn = 0.75;
     double ringJamnt = 0.2;
-    double wobbleRelease = 0.37;
+    double wobbleRelease = 0.3;
     double wobbleHold = 0.2;
     double forkHold = 0.75;
     double initFork = 0.85;
@@ -190,9 +190,7 @@ public class teleop_control_pid extends LinearOpMode {
             if(gamepad1.x){
                 robot.mtrIntake.setPower(-1);
             }
-            if(gamepad1.y){
-                robot.mtrIntake.setPower(0.75);
-            }
+
             /*
             if (gamepad1.a && (intakeRunning == true) && toggleTimerIntake.seconds() > toggleWaitTime) {
                 robot.mtrIntake.setPower(0);
@@ -307,6 +305,9 @@ public class teleop_control_pid extends LinearOpMode {
             }
             if(gamepad2.y){
                 robot.svoForkHold.setPosition(initFork);
+            }
+            if(gamepad1.y){
+                robot.svoWobble.setPosition(wobbleRelease);
             }
 /*
             if(robot.topLimit.getState() == true){

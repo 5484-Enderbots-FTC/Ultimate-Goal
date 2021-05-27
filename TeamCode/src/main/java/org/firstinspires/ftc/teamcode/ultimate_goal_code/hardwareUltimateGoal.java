@@ -17,7 +17,7 @@ public class hardwareUltimateGoal {
 
     double ringPushIn = 0.75;
     double magDown = 0.85;
-    double wobbleHold = 0.2;
+    double wobbleHold = 0.19;
     double forkHold = 0.95;
 
     public hardwareUltimateGoal() {
