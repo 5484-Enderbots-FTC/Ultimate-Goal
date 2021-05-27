@@ -66,12 +66,15 @@ public class auto_odometry_tests extends LinearOpMode {
         Trajectory endTangent0 = drive.trajectoryBuilder(new Pose2d())
                 .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(0))
                 .build();
+
         Trajectory endTangent90 = drive.trajectoryBuilder(new Pose2d())
                 .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(90))
                 .build();
+
         Trajectory endTangent180 = drive.trajectoryBuilder(new Pose2d())
                 .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(180))
                 .build();
+
         Trajectory endTangent270 = drive.trajectoryBuilder(new Pose2d())
                 .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(270))
                 .build();
@@ -92,15 +95,19 @@ public class auto_odometry_tests extends LinearOpMode {
             robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
 
             if(gamepad1.a){
+                drive.setPoseEstimate(startPose);
                 drive.followTrajectory(endTangent0);
             }
             if(gamepad1.b){
+                drive.setPoseEstimate(startPose);
                 drive.followTrajectory(endTangent90);
             }
             if(gamepad1.y){
+                drive.setPoseEstimate(startPose);
                 drive.followTrajectory(endTangent180);
             }
             if(gamepad1.x){
+                drive.setPoseEstimate(startPose);
                 drive.followTrajectory(endTangent270);
             }
         }
