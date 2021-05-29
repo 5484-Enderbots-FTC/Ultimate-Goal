@@ -216,7 +216,12 @@ public class teleop_control_pid extends LinearOpMode {
              * Gamepad 2 Controls
              */
             if (magIsUp) {
-                robot.mtrIntake.setPower(0);
+                if(gamepad1.x) {
+                    robot.mtrIntake.setPower(-1);
+                }
+                else{
+                    robot.mtrIntake.setPower(0);
+                }
                 intakeRunning = false;
                 if (gamepad2.right_bumper) {
                     currentState = ShootState.ZERO_RINGS_SHOT;
