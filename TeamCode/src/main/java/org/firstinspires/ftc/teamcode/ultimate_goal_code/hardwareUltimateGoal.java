@@ -106,6 +106,18 @@ public class hardwareUltimateGoal {
         webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
         );
     }
+    public void updateDrive(double fwdStick, double bkwdStick, double strStick){
+        mtrBL.setPower((fwdStick - bkwdStick + strStick));
+        mtrBR.setPower((fwdStick + bkwdStick - strStick));
+        mtrFL.setPower((fwdStick - bkwdStick - strStick));
+        mtrFR.setPower((fwdStick + bkwdStick + strStick));
+    }
+    public void updateDrive(double fwdStick, double bkwdStick, double strStick, boolean reversed){
+        mtrBL.setPower((-fwdStick + bkwdStick - strStick));
+        mtrBR.setPower((-fwdStick - bkwdStick + strStick));
+        mtrFL.setPower((-fwdStick + bkwdStick + strStick));
+        mtrFR.setPower((-fwdStick - bkwdStick - strStick));
+    }
 
     private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
         motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(

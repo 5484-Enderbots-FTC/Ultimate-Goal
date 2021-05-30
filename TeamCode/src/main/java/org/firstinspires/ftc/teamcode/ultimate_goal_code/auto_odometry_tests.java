@@ -35,11 +35,9 @@ public class auto_odometry_tests extends LinearOpMode {
 
     double targetShootHeading = Math.toRadians(5);
 
-    Pose2d targetLeft = new Pose2d(0, -10,targetShootHeading);
-    Pose2d targetMiddle = new Pose2d(0, -20,targetShootHeading);
-    Pose2d targetRight = new Pose2d(0, -30,targetShootHeading);
-
-
+    Pose2d targetLeft = new Pose2d(0, -15,targetShootHeading);
+    Pose2d targetMiddle = new Pose2d(0, -30,targetShootHeading);
+    Pose2d targetRight = new Pose2d(0, -45,targetShootHeading);
 
     Pose2d againstWall = new Pose2d(0, 0, 0);
 
