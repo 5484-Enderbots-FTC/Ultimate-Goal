@@ -48,31 +48,17 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     ElapsedTime timer = new ElapsedTime();
 
     //OpenCV stuff
-    OpenCvCamera webcam;
     RingStackDeterminationPipeline pipeline;
 
     //motors
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
     State currentState;
-
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
-
+    
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
 
-    double normalFlywheelVelocity = 1350;
-    double magDown = 0.85;
-    double magUp = 0.58;
-    double ringPushOut = 0.6;
-    double ringPushIn = 0.75;
-    double wobbleRelease = 0.37;
-    double wobbleHold = 0.2;
-    double forkHold = 0.8;
-    double forkRelease = 0.7;
-    double flywheelPower = 0.614;
-
-    public static class var {
+    public static class vars {
         private static int RingStackIndentified = 0;
     }
 
@@ -96,32 +82,19 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     public void runOpMode() {
 
         robot.init(hardwareMap);
+        robot.initShooterPID(hardwareMap);
+        robot.initWebcam(hardwareMap);
 
-        //Velocity PID
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-        //PID motor config
-        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        robot.mtrFlywheel.setMotorType(motorConfigurationType);
-
-        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
-
+        pipeline = new RingStackDeterminationPipeline();
+        robot.webcam.setPipeline(pipeline);
 
         //TuningController tuningController = new TuningController();
 
         //telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         //openCV config
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        pipeline = new RingStackDeterminationPipeline();
-        webcam.setPipeline(pipeline);
 
-        webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
-        );
+
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -149,13 +122,13 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
             switch (currentState) {
 
                 case DETECT_RING_STACK:
-                    if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
+                    if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (vars.RingStackIndentified == 1)) {
                         targetZone = Zone.A;
                         currentState = State.NO_RINGS;
-                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
+                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (vars.RingStackIndentified == 1)) {
                         targetZone = Zone.B;
                         currentState = State.ONE_RING;
-                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
+                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (vars.RingStackIndentified == 1)) {
                         targetZone = Zone.C;
                         currentState = State.FOUR_RINGS;
                     }
@@ -169,13 +142,13 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                     encoderForwardNoBrake(0.6, 46);
                     encoderForward(0.2, 15);
                     encoderStrafe(0.3, 12);
-                    robot.svoMagLift.setPosition(magUp);
+                    robot.svoMagLift.setPosition(var.magUp);
                     shootThree(0.6);
-                    robot.svoMagLift.setPosition(magDown);
+                    robot.svoMagLift.setPosition(var.magDown);
 
                     // nav to zone a
                     encoderStrafe(0.4, 40);
-                    robot.svoWobble.setPosition(wobbleRelease);
+                    robot.svoWobble.setPosition(var.wobbleRelease);
                     waitFor(1);
                     //back up to second wobble (no rings so navigate however)
 
@@ -199,14 +172,14 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                     encoderForwardNoBrake(0.6, 46);
                     encoderForward(0.2, 15);
                     encoderStrafe(0.2, 12);
-                    robot.svoMagLift.setPosition(magUp);
+                    robot.svoMagLift.setPosition(var.magUp);
                     shootThree(0.6);
-                    robot.svoMagLift.setPosition(magDown);
+                    robot.svoMagLift.setPosition(var.magDown);
 
                     //nav to zone b and rain drop drop top
                     encoderStrafe(0.2, 4);
                     encoderForward(0.6, 23);
-                    robot.svoWobble.setPosition(wobbleRelease);
+                    robot.svoWobble.setPosition(var.wobbleRelease);
                     waitFor(1);
 
                     //back up to second wobble
@@ -231,15 +204,15 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
                     encoderForwardNoBrake(0.6, 46);
                     encoderForward(0.2, 15);
                     encoderStrafe(0.2, 12);
-                    robot.svoMagLift.setPosition(magUp);
+                    robot.svoMagLift.setPosition(var.magUp);
                     shootThree(0.6);
-                    robot.svoMagLift.setPosition(magDown);
+                    robot.svoMagLift.setPosition(var.magDown);
 
                     //nav to zone c lol
                     encoderStrafe(0.3, 40);
                     encoderForwardNoBrake(0.6, 46);
                     encoderForward(0.6, 6);
-                    robot.svoWobble.setPosition(wobbleRelease);
+                    robot.svoWobble.setPosition(var.wobbleRelease);
                     waitFor(1);
 
                     //then back that ass straight tf up along the wall then strafe at the right point to pick up wobble dos
@@ -333,13 +306,13 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
 
             position = RingPosition.FOUR;
             if (avg1 > FOUR_RING_THRESHOLD) {
-                var.RingStackIndentified = 1;
+                vars.RingStackIndentified = 1;
                 position = RingPosition.FOUR;
             } else if (avg1 > ONE_RING_THRESHOLD) {
-                var.RingStackIndentified = 1;
+                vars.RingStackIndentified = 1;
                 position = RingPosition.ONE;
             } else {
-                var.RingStackIndentified = 1;
+                vars.RingStackIndentified = 1;
                 position = RingPosition.NONE;
             }
 
@@ -365,13 +338,13 @@ public class auto_wobble_shoot_park_FSM extends LinearOpMode {
     }
 
     private void pushARing() {
-        robot.svoRingPush.setPosition(ringPushOut);
+        robot.svoRingPush.setPosition(var.ringPushOut);
         waitFor(0.5);
-        robot.svoRingPush.setPosition(ringPushIn);
+        robot.svoRingPush.setPosition(var.ringPushIn);
     }
 
     private void shootThree(double inBetweenRingTime) {
-        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+        robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
         waitFor(1.4);
         pushARing();
         waitFor(inBetweenRingTime);

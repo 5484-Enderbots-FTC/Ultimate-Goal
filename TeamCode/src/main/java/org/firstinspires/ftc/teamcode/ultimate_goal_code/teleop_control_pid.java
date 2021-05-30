@@ -28,38 +28,17 @@ public class teleop_control_pid extends LinearOpMode {
 
     ShootState currentState;
 
-
-    private static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
-
     /***
 
      ~ Constants ~
 
      */
 
-    double timeBetweenShots = 0.37;
-    double servoMoveTime = 0.25;
-
-    double normalFlywheelVelocity = 1350;
-    double psFlywheelVelocity = 1200;
     double targetVelo = 0;
-    double magDown = 0.85;
-    double magUp = 0.58;
-    double ringPushOut = 0.6;
-    double ringPushIn = 0.75;
-    double ringJamnt = 0.2;
-    double wobbleRelease = 0.3;
-    double wobbleHold = 0.2;
-    double forkHold = 0.75;
-    double initFork = 0.85;
-    double forkRaise = 0.79;
-    double forkRelease = 0.5;
-    double toggleWaitTime = 0.5;
 
     boolean magIsUp = false;
     boolean backwardsMode = false;
     boolean slowMode = false;
-    boolean forkHeld = true;
     boolean intakeRunning = false;
     boolean flywheelRunning = false;
 
@@ -98,9 +77,8 @@ public class teleop_control_pid extends LinearOpMode {
 
         while (!isStopRequested() && opModeIsActive()) {
             /**
-             * Telemetry & Velocity PID
+             * Telemetry
              */
-            double motorVelo = robot.mtrFlywheel.getVelocity();
 
             telemetry.addData("topLimit: ", robot.topLimit.getState());
             telemetry.update();
@@ -109,21 +87,21 @@ public class teleop_control_pid extends LinearOpMode {
              * Gamepad 1 Controls
              */
 
-            if (gamepad1.right_bumper && (backwardsMode == false) && (toggleTimerB.seconds() > toggleWaitTime)) {
+            if (gamepad1.right_bumper && (backwardsMode == false) && (toggleTimerB.seconds() > var.toggleWaitTime)) {
                 //activate backwards mode
                 backwardsMode = true;
                 toggleTimerB.reset();
-            } else if (gamepad1.right_bumper && (backwardsMode == true) && (toggleTimerB.seconds() > toggleWaitTime)) {
+            } else if (gamepad1.right_bumper && (backwardsMode == true) && (toggleTimerB.seconds() > var.toggleWaitTime)) {
                 //deactivate backwards mode
                 backwardsMode = false;
                 toggleTimerB.reset();
             }
 
-            if (gamepad1.left_bumper && (slowMode == false) && (toggleTimerS.seconds() > toggleWaitTime)) {
+            if (gamepad1.left_bumper && (slowMode == false) && (toggleTimerS.seconds() > var.toggleWaitTime)) {
                 //activate slow mode
                 slowMode = true;
                 toggleTimerS.reset();
-            } else if (gamepad1.left_bumper && (slowMode == true) && (toggleTimerS.seconds() > toggleWaitTime)) {
+            } else if (gamepad1.left_bumper && (slowMode == true) && (toggleTimerS.seconds() > var.toggleWaitTime)) {
                 //deactivate slow mode
                 slowMode = false;
                 toggleTimerS.reset();
@@ -173,7 +151,7 @@ public class teleop_control_pid extends LinearOpMode {
             }
 
             if(gamepad1.y){
-                robot.svoWobble.setPosition(wobbleRelease);
+                robot.svoWobble.setPosition(var.wobbleRelease);
             }
 
             /**
@@ -197,27 +175,27 @@ public class teleop_control_pid extends LinearOpMode {
                         }
                     }
                 case ZERO_RINGS_SHOT:
-                    robot.svoRingPush.setPosition(ringPushOut);
-                    waitFor(servoMoveTime);
-                    robot.svoRingPush.setPosition(ringPushIn);
+                    robot.svoRingPush.setPosition(var.ringPushOut);
+                    waitFor(var.servoMoveTime);
+                    robot.svoRingPush.setPosition(var.ringPushIn);
                     waitFor(var.timeBetweenShots);
                     currentState = ShootState.ONE_RING_SHOT;
                 case ONE_RING_SHOT:
-                    robot.svoRingPush.setPosition(ringPushOut);
-                    waitFor(servoMoveTime);
-                    robot.svoRingPush.setPosition(ringPushIn);
-                    waitFor(timeBetweenShots);
+                    robot.svoRingPush.setPosition(var.ringPushOut);
+                    waitFor(var.servoMoveTime);
+                    robot.svoRingPush.setPosition(var.ringPushIn);
+                    waitFor(var.timeBetweenShots);
                     currentState = ShootState.TWO_RINGS_SHOT;
                 case TWO_RINGS_SHOT:
-                    robot.svoRingPush.setPosition(ringPushOut);
-                    waitFor(servoMoveTime);
-                    robot.svoRingPush.setPosition(ringPushIn);
-                    waitFor(timeBetweenShots);
+                    robot.svoRingPush.setPosition(var.ringPushOut);
+                    waitFor(var.servoMoveTime);
+                    robot.svoRingPush.setPosition(var.ringPushIn);
+                    waitFor(var.timeBetweenShots);
                     currentState = ShootState.FINISH;
                 case FINISH:
                     robot.mtrIntake.setPower(1);
                     intakeRunning = true;
-                    robot.svoMagLift.setPosition(magDown);
+                    robot.svoMagLift.setPosition(var.magDown);
                     robot.mtrFlywheel.setPower(0);
                     flywheelRunning = false;
                     magIsUp = false;
@@ -228,18 +206,18 @@ public class teleop_control_pid extends LinearOpMode {
                 currentState = ShootState.NOTHING;
             }
 
-            if (gamepad2.a && flywheelRunning == false && toggleTimerShooter.seconds() > toggleWaitTime) {
-                robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
-                targetVelo = normalFlywheelVelocity;
+            if (gamepad2.a && flywheelRunning == false && toggleTimerShooter.seconds() > var.toggleWaitTime) {
+                robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
+                targetVelo = var.normalFlywheelVelocity;
                 flywheelRunning = true;
                 toggleTimerShooter.reset();
             }
             if (gamepad2.b) {
-                robot.mtrFlywheel.setVelocity(psFlywheelVelocity);
-                targetVelo = psFlywheelVelocity;
+                robot.mtrFlywheel.setVelocity(var.psFlywheelVelocity);
+                targetVelo = var.psFlywheelVelocity;
                 flywheelRunning = true;
             }
-            if (gamepad2.a && flywheelRunning == true && toggleTimerShooter.seconds() > toggleWaitTime) {
+            if (gamepad2.a && flywheelRunning == true && toggleTimerShooter.seconds() > var.toggleWaitTime) {
                 robot.mtrFlywheel.setPower(0);
                 targetVelo = 0;
                 flywheelRunning = false;
@@ -247,15 +225,15 @@ public class teleop_control_pid extends LinearOpMode {
             }
 
             if (gamepad2.right_trigger > 0.1) {
-                robot.svoRingPush.setPosition(ringJamnt);
+                robot.svoRingPush.setPosition(var.ringJamnt);
                 waitFor(0.3);
-                robot.svoRingPush.setPosition(ringPushIn);
+                robot.svoRingPush.setPosition(var.ringPushIn);
             }
 
             if (gamepad2.dpad_up) {
-                robot.svoMagLift.setPosition(magUp);
-                robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
-                targetVelo = normalFlywheelVelocity;
+                robot.svoMagLift.setPosition(var.magUp);
+                robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
+                targetVelo = var.normalFlywheelVelocity;
                 flywheelRunning = true;
                 magIsUp = true;
             }
@@ -263,7 +241,7 @@ public class teleop_control_pid extends LinearOpMode {
             if (gamepad2.dpad_down) {
                 robot.mtrIntake.setPower(1);
                 intakeRunning = true;
-                robot.svoMagLift.setPosition(magDown);
+                robot.svoMagLift.setPosition(var.magDown);
                 robot.mtrFlywheel.setPower(0);
                 flywheelRunning = false;
                 magIsUp = false;
@@ -272,12 +250,12 @@ public class teleop_control_pid extends LinearOpMode {
             robot.mtrWobble.setPower(gamepad2.right_stick_y);
 
             if(gamepad2.left_bumper){
-                robot.svoForkHold.setPosition(forkHold);
+                robot.svoForkHold.setPosition(var.forkHold);
             }
             if(gamepad2.left_trigger > 0.1){
-                robot.svoForkHold.setPosition(forkRelease);
+                robot.svoForkHold.setPosition(var.forkRelease);
                 waitFor(1);
-                robot.svoForkHold.setPosition(forkRaise);
+                robot.svoForkHold.setPosition(var.forkRaise);
             }
 /*
             if(robot.topLimit.getState() == true){
@@ -307,13 +285,6 @@ public class teleop_control_pid extends LinearOpMode {
 
         }
     }
-
-    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
-        ));
-    }
-
 
 }
 

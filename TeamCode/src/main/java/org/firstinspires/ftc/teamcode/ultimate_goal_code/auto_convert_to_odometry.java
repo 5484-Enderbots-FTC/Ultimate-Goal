@@ -55,29 +55,19 @@ public class auto_convert_to_odometry extends LinearOpMode {
     ElapsedTime timer = new ElapsedTime();
 
     //OpenCV stuff
-    OpenCvCamera webcam;
     RingStackDeterminationPipeline pipeline;
 
     //motors
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
-    //odometry
-
 
     State currentState;
-
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
 
-
-    double normalFlywheelVelocity = 1350;
-
     double shootCorrection = 5;
     double shootAngleCorrection = 8;
 
-    double timeBetweenShots = 0.35;
-    double servoMoveTime = 0.3;
     double flywheelRevUpTime = 0.85;
 
     double wobbleGoalPower = -0.4;
@@ -85,17 +75,9 @@ public class auto_convert_to_odometry extends LinearOpMode {
     double wobbleDownPower = 0.1;
     double wobbleTime = 0.25;
 
-    double magDown = 0.85;
-    double magUp = 0.58;
-    double ringPushOut = 0.6;
-    double ringPushIn = 0.75;
-    double wobbleRelease = 0.3;
-    double wobbleHold = 0.19;
-    double forkHold = 0.8;
-    double forkRelease = 0.48;
-    boolean wobbleLifted = false;
 
-    public static class var {
+
+    public static class vars {
         private static int RingStackIndentified = 0;
     }
 
@@ -130,9 +112,9 @@ public class auto_convert_to_odometry extends LinearOpMode {
         robot.init(hardwareMap);
         robot.initShooterPID(hardwareMap);
         robot.initWebcam(hardwareMap);
-
+        
         pipeline = new RingStackDeterminationPipeline();
-        webcam.setPipeline(pipeline);
+        robot.webcam.setPipeline(pipeline);
 
         /***
          *               ODOMETRY TRAJECTORIES
@@ -262,9 +244,9 @@ public class auto_convert_to_odometry extends LinearOpMode {
                 .addDisplacementMarker(() -> {
                     drive.turn(Math.toRadians(shootCorrection));
                     waitFor(1);
-                    robot.svoMagLift.setPosition(magUp);
+                    robot.svoMagLift.setPosition(var.magUp);
                     shootOne();
-                    robot.svoMagLift.setPosition(magDown);
+                    robot.svoMagLift.setPosition(var.magDown);
                 })
                 .addTemporalMarker(1, () ->
                         robot.mtrWobble.setPower(counterWobblePower))
@@ -386,21 +368,21 @@ public class auto_convert_to_odometry extends LinearOpMode {
             switch (currentState) {
 
                 case DETECT_RING_STACK:
-                    if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (var.RingStackIndentified == 1)) {
+                    if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE) && (vars.RingStackIndentified == 1)) {
                         targetZone = Zone.A;
                         telemetry.addLine("Zone A, no rings");
                         telemetry.addData("Analysis", pipeline.getAnalysis());
                         telemetry.addData("Position", pipeline.position);
                         telemetry.update();
                         currentState = State.NO_RINGS;
-                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (var.RingStackIndentified == 1)) {
+                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE) && (vars.RingStackIndentified == 1)) {
                         targetZone = Zone.B;
                         telemetry.addLine("Zone B, one ring");
                         telemetry.addData("Analysis", pipeline.getAnalysis());
                         telemetry.addData("Position", pipeline.position);
                         telemetry.update();
                         currentState = State.ONE_RING;
-                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (var.RingStackIndentified == 1)) {
+                    } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR) && (vars.RingStackIndentified == 1)) {
                         targetZone = Zone.C;
                         telemetry.addLine("Zone C, four rings");
                         telemetry.addData("Analysis", pipeline.getAnalysis());
@@ -423,19 +405,19 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         drive.turn(Math.toRadians(shootCorrection));
 
                         //shoot
-                        robot.svoMagLift.setPosition(magUp);
+                        robot.svoMagLift.setPosition(var.magUp);
                         shootThree();
-                        robot.svoMagLift.setPosition(magDown);
+                        robot.svoMagLift.setPosition(var.magDown);
 
                         //undo correction
                         drive.turn(Math.toRadians(-shootCorrection));
 
                         //go to zone A
-                        robot.svoForkHold.setPosition(forkRelease);
+                        robot.svoForkHold.setPosition(var.forkRelease);
                         drive.followTrajectory(noRingToA);
 
                         //bye bye wobble
-                        robot.svoWobble.setPosition(wobbleRelease);
+                        robot.svoWobble.setPosition(var.wobbleRelease);
                         waitFor(1);
 
                         //BACKWARDS trajectory tiem :D
@@ -470,19 +452,19 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         drive.turn(Math.toRadians(shootCorrection));
 
                         //shoot
-                        robot.svoMagLift.setPosition(magUp);
+                        robot.svoMagLift.setPosition(var.magUp);
                         shootThree();
-                        robot.svoMagLift.setPosition(magDown);
+                        robot.svoMagLift.setPosition(var.magDown);
 
                         //undo correction
                         drive.turn(Math.toRadians(-shootCorrection));
 
                         //nav to zone b
-                        robot.svoForkHold.setPosition(forkRelease);
+                        robot.svoForkHold.setPosition(var.forkRelease);
                         drive.followTrajectory(oneRingToB);
 
                         //raindrop drop top
-                        robot.svoWobble.setPosition(wobbleRelease);
+                        robot.svoWobble.setPosition(var.wobbleRelease);
                         waitFor(1);
 
                         //BACKWARDS to second wobble tiem TWO :DDD
@@ -524,21 +506,21 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         drive.turn(Math.toRadians(shootCorrection));
 
                         //shoot
-                        robot.svoMagLift.setPosition(magUp);
+                        robot.svoMagLift.setPosition(var.magUp);
                         shootThree();
-                        robot.svoMagLift.setPosition(magDown);
+                        robot.svoMagLift.setPosition(var.magDown);
 
                         //undo correction
                         drive.turn(Math.toRadians(-shootCorrection));
                         waitFor(0.3);
 
                         //nav to zone C
-                        robot.svoForkHold.setPosition(forkRelease);
+                        robot.svoForkHold.setPosition(var.forkRelease);
                         drive.followTrajectory(fourRingsToC);
                         drive.turn(Math.toRadians(-6));
 
                         //bye bye wobble
-                        robot.svoWobble.setPosition(wobbleRelease);
+                        robot.svoWobble.setPosition(var.wobbleRelease);
                         waitFor(1);
 
                         //go go power rangers (to wobble dos)
@@ -561,9 +543,9 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
                         //turn for shoot
                         drive.turn(Math.toRadians(8));
-                        robot.svoMagLift.setPosition(magUp);
+                        robot.svoMagLift.setPosition(var.magUp);
                         shootTwo();
-                        robot.svoMagLift.setPosition(magDown);
+                        robot.svoMagLift.setPosition(var.magDown);
                         drive.turn(Math.toRadians(-8));
                         drive.turn(Math.toRadians(-179.9));
                         robot.mtrIntake.setPower(0);
@@ -673,13 +655,13 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
             position = RingPosition.FOUR;
             if (avg1 > FOUR_RING_THRESHOLD) {
-                var.RingStackIndentified = 1;
+                vars.RingStackIndentified = 1;
                 position = RingPosition.FOUR;
             } else if (avg1 > ONE_RING_THRESHOLD) {
-                var.RingStackIndentified = 1;
+                vars.RingStackIndentified = 1;
                 position = RingPosition.ONE;
             } else {
-                var.RingStackIndentified = 1;
+                vars.RingStackIndentified = 1;
                 position = RingPosition.NONE;
             }
 
@@ -705,36 +687,36 @@ public class auto_convert_to_odometry extends LinearOpMode {
     }
 
     private void pushARing() {
-        robot.svoRingPush.setPosition(ringPushOut);
-        waitFor(servoMoveTime);
-        robot.svoRingPush.setPosition(ringPushIn);
+        robot.svoRingPush.setPosition(var.ringPushOut);
+        waitFor(var.servoMoveTime);
+        robot.svoRingPush.setPosition(var.ringPushIn);
     }
 
     private void shootThree() {
-        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+        robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
         waitFor(flywheelRevUpTime+0.1);
         pushARing();
-        waitFor(timeBetweenShots);
+        waitFor(var.timeBetweenShots);
         pushARing();
-        waitFor(timeBetweenShots);
+        waitFor(var.timeBetweenShots);
         pushARing();
-        waitFor(timeBetweenShots);
+        waitFor(var.timeBetweenShots);
         robot.mtrFlywheel.setPower(0);
 
     }
 
     private void shootTwo() {
-        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+        robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
         waitFor(flywheelRevUpTime+0.2);
         pushARing();
-        waitFor(timeBetweenShots);
+        waitFor(var.timeBetweenShots);
         pushARing();
-        waitFor(timeBetweenShots);
+        waitFor(var.timeBetweenShots);
         robot.mtrFlywheel.setPower(0);
     }
 
     private void shootOne() {
-        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+        robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
         waitFor(flywheelRevUpTime+0.1);
         pushARing();
         robot.mtrFlywheel.setPower(0);
@@ -840,12 +822,5 @@ public class auto_convert_to_odometry extends LinearOpMode {
         brakeMotors();
         runWithoutEncoder();
     }
-
-    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
-        ));
-    }
-
 
 }

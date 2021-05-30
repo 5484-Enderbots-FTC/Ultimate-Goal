@@ -7,7 +7,6 @@ public class var {
 
     public static double normalFlywheelVelocity = 1350;
     public static double psFlywheelVelocity = 1200;
-    public static double targetVelo = 0;
 
     public static double magUp = 0.58;
     public static double ringPushOut = 0.6;

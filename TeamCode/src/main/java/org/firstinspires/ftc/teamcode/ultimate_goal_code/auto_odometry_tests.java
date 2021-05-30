@@ -6,7 +6,6 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -15,20 +14,8 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.odometry.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
-import org.firstinspires.ftc.teamcode.ultimate_goal_code.hardwareUltimateGoal;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvPipeline;
+
 
 @TeleOp(name = "odometry testing", group = "testing")
 public class auto_odometry_tests extends LinearOpMode {
@@ -38,28 +25,6 @@ public class auto_odometry_tests extends LinearOpMode {
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
-
-    double normalFlywheelVelocity = 1350;
-    double psFlywheelVelocity = 1200;
-
-    double shootAngleCorrection = 0;
-
-    double timeBetweenShots = 0.4;
-    double servoMoveTime = 0.3;
-    double flywheelRevUpTime = 0.85;
-
-    double wobbleGoalPower = -0.2;
-    double counterWobblePower = -0.15;
-    double wobbleDownPower = 0.1;
-
-    double magDown = 0.85;
-    double magUp = 0.58;
-    double ringPushOut = 0.6;
-    double ringPushIn = 0.75;
-    double wobbleRelease = 0.3;
-    double wobbleHold = 0.19;
-    double forkHold = 0.8;
-    double forkRelease = 0.5;
 
     enum Mode {
         DRIVER_CONTROL,
@@ -141,17 +106,17 @@ public class auto_odometry_tests extends LinearOpMode {
                             .lineToLinearHeading(targetRight)
                             .build();
 
-                    robot.mtrFlywheel.setVelocity(psFlywheelVelocity);
-                    robot.svoMagLift.setPosition(magUp);
+                    robot.mtrFlywheel.setVelocity(var.psFlywheelVelocity);
+                    robot.svoMagLift.setPosition(var.magUp);
                     drive.followTrajectory(leftShot);
                     pushARing();
                     drive.followTrajectory(middleShot);
                     pushARing();
                     drive.followTrajectory(rightShot);
                     pushARing();
-                    robot.svoMagLift.setPosition(magDown);
+                    robot.svoMagLift.setPosition(var.magDown);
 
-                    robot.svoForkHold.setPosition(forkRelease);
+                    robot.svoForkHold.setPosition(var.forkRelease);
 
                     drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     currentMode = Mode.DRIVER_CONTROL;
@@ -170,9 +135,9 @@ public class auto_odometry_tests extends LinearOpMode {
 
     }
     private void pushARing() {
-        robot.svoRingPush.setPosition(ringPushOut);
-        waitFor(servoMoveTime);
-        robot.svoRingPush.setPosition(ringPushIn);
+        robot.svoRingPush.setPosition(var.ringPushOut);
+        waitFor(var.servoMoveTime);
+        robot.svoRingPush.setPosition(var.ringPushIn);
     }
 
     private void waitFor(double waittime) {
