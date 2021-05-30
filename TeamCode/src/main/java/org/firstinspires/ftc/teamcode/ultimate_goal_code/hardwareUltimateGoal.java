@@ -17,6 +17,8 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 public class hardwareUltimateGoal {
 
+    //hi welcome to my hardware library for this season that i also made at...the end of the season :}
+
     DcMotorEx mtrBL, mtrBR, mtrFL, mtrFR, mtrIntake, mtrWobble, mtrFlywheel = null;
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
     DigitalChannel topLimit;
@@ -106,17 +108,17 @@ public class hardwareUltimateGoal {
         webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
         );
     }
-    public void updateDrive(double fwdStick, double bkwdStick, double strStick){
-        mtrBL.setPower((fwdStick - bkwdStick + strStick));
-        mtrBR.setPower((fwdStick + bkwdStick - strStick));
-        mtrFL.setPower((fwdStick - bkwdStick - strStick));
-        mtrFR.setPower((fwdStick + bkwdStick + strStick));
+    public void updateDrive(double fwdStick, double turnStick, double strStick){
+        mtrBL.setPower((fwdStick - turnStick + strStick));
+        mtrBR.setPower((fwdStick + turnStick - strStick));
+        mtrFL.setPower((fwdStick - turnStick - strStick));
+        mtrFR.setPower((fwdStick + turnStick + strStick));
     }
-    public void updateDrive(double fwdStick, double bkwdStick, double strStick, boolean reversed){
-        mtrBL.setPower((-fwdStick + bkwdStick - strStick));
-        mtrBR.setPower((-fwdStick - bkwdStick + strStick));
-        mtrFL.setPower((-fwdStick + bkwdStick + strStick));
-        mtrFR.setPower((-fwdStick - bkwdStick - strStick));
+    public void updateDrive(double fwdStick, double turnStick, double strStick, boolean reversed){
+        mtrBL.setPower((-fwdStick + turnStick - strStick));
+        mtrBR.setPower((-fwdStick - turnStick + strStick));
+        mtrFL.setPower((-fwdStick + turnStick + strStick));
+        mtrFR.setPower((-fwdStick - turnStick - strStick));
     }
 
     private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {

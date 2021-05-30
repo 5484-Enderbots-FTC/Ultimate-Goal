@@ -2,16 +2,11 @@ package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "teleop w/ PID", group = "testing")
+@TeleOp(name = "teleop PID", group = "teleop")
 public class teleop_control_pid extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime timer = new ElapsedTime();
@@ -150,7 +145,7 @@ public class teleop_control_pid extends LinearOpMode {
                 robot.mtrBR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) * 0.5);
                 robot.mtrFL.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * 0.5);
                 robot.mtrFR.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x) * 0.5);
-                
+
                  */
             }
 

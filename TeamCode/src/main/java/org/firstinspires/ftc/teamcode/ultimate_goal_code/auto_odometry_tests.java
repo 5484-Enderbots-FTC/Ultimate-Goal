@@ -24,8 +24,6 @@ public class auto_odometry_tests extends LinearOpMode {
 
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
-
     enum Mode {
         DRIVER_CONTROL,
         AUTOMATIC_CONTROL
@@ -48,17 +46,7 @@ public class auto_odometry_tests extends LinearOpMode {
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        //Shooter PID config
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-        //PID motor config
-        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        robot.mtrFlywheel.setMotorType(motorConfigurationType);
-
-        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
+        robot.initShooterPID(hardwareMap);
 
         /***
          *               ODOMETRY TRAJECTORIES
@@ -74,10 +62,15 @@ public class auto_odometry_tests extends LinearOpMode {
 
         while (!isStopRequested() && opModeIsActive()) {
 
+            robot.updateDrive(gamepad1.left_stick_y,gamepad1.left_stick_x,gamepad1.right_stick_x,true);
+
+            /*
             robot.mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
             robot.mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
             robot.mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
             robot.mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+
+             */
 
             switch (currentMode) {
 
