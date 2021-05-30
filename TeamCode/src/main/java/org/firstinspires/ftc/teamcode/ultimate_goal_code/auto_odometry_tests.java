@@ -40,6 +40,7 @@ public class auto_odometry_tests extends LinearOpMode {
     public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 
     double normalFlywheelVelocity = 1350;
+    double psFlywheelVelocity = 1200;
 
     double shootAngleCorrection = 0;
 
@@ -60,10 +61,29 @@ public class auto_odometry_tests extends LinearOpMode {
     double forkHold = 0.8;
     double forkRelease = 0.5;
 
+    enum Mode {
+        DRIVER_CONTROL,
+        AUTOMATIC_CONTROL
+    }
+
+    Mode currentMode = Mode.DRIVER_CONTROL;
+
+    double targetShootHeading = Math.toRadians(5);
+
+    Pose2d targetLeft = new Pose2d(0, -10,targetShootHeading);
+    Pose2d targetMiddle = new Pose2d(0, -20,targetShootHeading);
+    Pose2d targetRight = new Pose2d(0, -30,targetShootHeading);
+
+
+
+    Pose2d againstWall = new Pose2d(0, 0, 0);
+
     @Override
     public void runOpMode() throws InterruptedException {
         robot.init(hardwareMap);
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //Shooter PID config
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
@@ -80,58 +100,6 @@ public class auto_odometry_tests extends LinearOpMode {
         /***
          *               ODOMETRY TRAJECTORIES
          */
-        /*
-
-        Pose2d startPose = new Pose2d(0, 0, 0);
-        drive.setPoseEstimate(startPose);
-
-        Trajectory endTangent0 = drive.trajectoryBuilder(new Pose2d())
-                .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(0))
-                .build();
-
-        Trajectory endTangent90 = drive.trajectoryBuilder(new Pose2d())
-                .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(90))
-                .build();
-
-        Trajectory endTangent180 = drive.trajectoryBuilder(new Pose2d())
-                .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(180))
-                .build();
-
-        Trajectory endTangent270 = drive.trajectoryBuilder(new Pose2d())
-                .splineToLinearHeading(new Pose2d(36, 36, Math.toRadians(90)), Math.toRadians(270))
-                .build();
-
-
-         */
-
-        Pose2d wobblePose = new Pose2d(-39, -51, 0);
-        drive.setPoseEstimate(wobblePose);
-        Trajectory fourRingsToShoot1 = drive.trajectoryBuilder(wobblePose)
-                .lineToConstantHeading(
-                        new Vector2d(-22, -57)
-                )
-                .addDisplacementMarker(() ->
-                        robot.mtrIntake.setPower(1))
-                .build();
-
-        Trajectory fourRingsToShoot2 = drive.trajectoryBuilder(fourRingsToShoot1.end().plus(new Pose2d (0,0, Math.toRadians(90))))
-                .lineToConstantHeading(
-                        new Vector2d(-22, -40)
-                )
-                .build();
-        Trajectory fourRingsToShoot3 = drive.trajectoryBuilder(fourRingsToShoot2.end().plus(new Pose2d (0,0, Math.toRadians(-90))))
-                .lineTo(
-                        new Vector2d(-3, -40)
-                )
-                .build();
-
-        Trajectory fourRingsToShoot4 = drive.trajectoryBuilder(fourRingsToShoot3.end())
-                .lineTo(
-                        new Vector2d(-3, -30)
-                )
-                //.addTemporalMarker(1, () ->
-                     //   robot.mtrWobble.setPower(counterWobblePower))
-                .build();
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetry.addData("Status", "Initialized");
@@ -141,55 +109,61 @@ public class auto_odometry_tests extends LinearOpMode {
         waitForStart();
 
 
-        while(!isStopRequested() && opModeIsActive()){
+        while (!isStopRequested() && opModeIsActive()) {
 
-            robot.mtrBL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-            robot.mtrBR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-            robot.mtrFL.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-            robot.mtrFR.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
-/*
-            if(gamepad1.a){
-                drive.setPoseEstimate(startPose);
-                drive.followTrajectory(endTangent0);
-            }
-            if(gamepad1.b){
-                drive.setPoseEstimate(startPose);
-                drive.followTrajectory(endTangent90);
-            }
-            if(gamepad1.y){
-                drive.setPoseEstimate(startPose);
-                drive.followTrajectory(endTangent180);
-            }
-            if(gamepad1.x){
-                drive.setPoseEstimate(startPose);
-                drive.followTrajectory(endTangent270);
+            robot.mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
+            robot.mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
+            robot.mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+            robot.mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
+
+            switch (currentMode) {
+
+                case DRIVER_CONTROL:
+                    /***
+                     * gotta decide if driver control can live outside of this case or not - i think it can?? since it's constantly updated :P
+                     */
+
+                    if (gamepad1.a) {
+                        drive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                        currentMode = Mode.AUTOMATIC_CONTROL;
+                    }
+
+                case AUTOMATIC_CONTROL:
+                    drive.setPoseEstimate(againstWall);
+
+                    Trajectory leftShot = drive.trajectoryBuilder(againstWall)
+                            .lineToLinearHeading(targetLeft)
+                            .build();
+                    Trajectory middleShot = drive.trajectoryBuilder(leftShot.end())
+                            .lineToLinearHeading(targetMiddle)
+                            .build();
+                    Trajectory rightShot = drive.trajectoryBuilder(middleShot.end())
+                            .lineToLinearHeading(targetRight)
+                            .build();
+
+                    robot.mtrFlywheel.setVelocity(psFlywheelVelocity);
+                    robot.svoMagLift.setPosition(magUp);
+                    drive.followTrajectory(leftShot);
+                    pushARing();
+                    drive.followTrajectory(middleShot);
+                    pushARing();
+                    drive.followTrajectory(rightShot);
+                    pushARing();
+                    robot.svoMagLift.setPosition(magDown);
+
+                    robot.svoForkHold.setPosition(forkRelease);
+
+                    drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    currentMode = Mode.DRIVER_CONTROL;
+                    break;
+
             }
 
- */
-            if(gamepad1.a){
-                robot.mtrWobble.setPower(-0.4);
-                waitFor(0.5);
-                robot.mtrWobble.setPower(0);
+            if (gamepad1.b && currentMode != Mode.DRIVER_CONTROL) {
+                drive.cancelFollowing();
+                drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                currentMode = Mode.DRIVER_CONTROL;
             }
-
-            if(gamepad1.right_bumper){
-                drive.followTrajectory(fourRingsToShoot1);
-                drive.turn(Math.toRadians(90));
-                drive.followTrajectory(fourRingsToShoot2);
-                drive.turn(Math.toRadians(-90));
-                drive.followTrajectory(fourRingsToShoot3);
-                drive.followTrajectory(fourRingsToShoot4);
-                waitFor(1);
-                robot.svoMagLift.setPosition(magUp);
-                shootOne();
-                waitFor(0.4);
-                shootOne();
-                robot.svoMagLift.setPosition(magDown);
-                robot.mtrIntake.setPower(0);
-                robot.mtrWobble.setPower(0);
-                robot.mtrFlywheel.setPower(0);
-            }
-
 
 
         }
@@ -199,12 +173,6 @@ public class auto_odometry_tests extends LinearOpMode {
         robot.svoRingPush.setPosition(ringPushOut);
         waitFor(servoMoveTime);
         robot.svoRingPush.setPosition(ringPushIn);
-    }
-
-    private void shootOne() {
-        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
-        waitFor(flywheelRevUpTime);
-        pushARing();
     }
 
     private void waitFor(double waittime) {
