@@ -1,11 +1,20 @@
 package org.firstinspires.ftc.teamcode.ultimate_goal_code;
 
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 
 public class hardwareUltimateGoal {
 
@@ -13,12 +22,10 @@ public class hardwareUltimateGoal {
     Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
     DigitalChannel topLimit;
     VoltageSensor batteryVoltageSensor;
+    OpenCvCamera webcam;
     HardwareMap hwMap = null;
 
-    double ringPushIn = 0.75;
-    double magDown = 0.85;
-    double wobbleHold = 0.19;
-    double forkHold = 0.95;
+    private static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 
     public hardwareUltimateGoal() {
 
@@ -72,10 +79,38 @@ public class hardwareUltimateGoal {
         topLimit = hwMap.get(DigitalChannel.class, "topLimit");
         topLimit.setMode(DigitalChannel.Mode.INPUT);
 
-        svoRingPush.setPosition(ringPushIn);
-        svoMagLift.setPosition(magDown);
-        svoWobble.setPosition(wobbleHold);
-        svoForkHold.setPosition(forkHold);
+        svoRingPush.setPosition(var.ringPushIn);
+        svoMagLift.setPosition(var.magDown);
+        svoWobble.setPosition(var.wobbleHold);
+        svoForkHold.setPosition(var.initFork);
 
+    }
+    public void initShooterPID(HardwareMap ahwMap) {
+        hwMap = ahwMap;
+        //Velocity PID
+        for (LynxModule module : hwMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+        //PID motor config
+        mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MotorConfigurationType motorConfigurationType = mtrFlywheel.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
+        mtrFlywheel.setMotorType(motorConfigurationType);
+
+        setPIDFCoefficients(mtrFlywheel, MOTOR_VELO_PID);
+    }
+    public void initWebcam(HardwareMap ahwMap) {
+        hwMap = ahwMap;
+
+        int cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hwMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
+        );
+    }
+
+    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
+        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
+                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / batteryVoltageSensor.getVoltage()
+        ));
     }
 }

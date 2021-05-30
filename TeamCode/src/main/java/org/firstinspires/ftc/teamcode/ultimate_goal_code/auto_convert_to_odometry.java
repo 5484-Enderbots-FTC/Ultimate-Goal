@@ -115,31 +115,24 @@ public class auto_convert_to_odometry extends LinearOpMode {
         STOP
     }
 
+    Vector2d shootingPosition = new Vector2d(-3,-30);
+
+    Vector2d noRingWobblePickUp = new Vector2d(-39,-49.5);
+    Vector2d oneRingWobblePickUp = new Vector2d(-39,-49.5);
+    Vector2d fourRingWobblePickUp = new Vector2d(-39,-49.75);
+
+    Vector2d park01 = new Vector2d(9,-35);
+    Vector2d park4 = new Vector2d(9,-55);
+
     @Override
     public void runOpMode() {
-        robot.init(hardwareMap);
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        robot.init(hardwareMap);
+        robot.initShooterPID(hardwareMap);
+        robot.initWebcam(hardwareMap);
 
-        //openCV config
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         pipeline = new RingStackDeterminationPipeline();
         webcam.setPipeline(pipeline);
-
-        webcam.openCameraDeviceAsync(() -> webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT)
-        );
-
-        //Shooter PID config
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-        //PID motor config
-        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        robot.mtrFlywheel.setMotorType(motorConfigurationType);
-
-        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
 
         /***
          *               ODOMETRY TRAJECTORIES
@@ -150,7 +143,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
         //shooting trajectory for A lol:
         Trajectory toShootA = drive.trajectoryBuilder(new Pose2d())
                 .splineToConstantHeading(
-                        new Vector2d(-3, -30), Math.toRadians(0),
+                        shootingPosition, Math.toRadians(0),
                         SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
@@ -164,7 +157,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .splineToConstantHeading(
-                        new Vector2d(-3, -30), Math.toRadians(0),
+                        shootingPosition, Math.toRadians(0),
                         SampleMecanumDrive.getVelocityConstraint(20, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
@@ -183,7 +176,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
         Trajectory noRingToWobble = drive.trajectoryBuilder(noRingToA.end(), true)
                 .lineToConstantHeading(
-                        new Vector2d(-39, -49.5),
+                        noRingWobblePickUp,
                         SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
@@ -210,7 +203,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .splineToConstantHeading(
-                        new Vector2d(9, -35), Math.toRadians(0)
+                        park01, Math.toRadians(0)
                 )
                 .build();
 
@@ -241,7 +234,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                 .build();
         Trajectory oneRingToWobble3 = drive.trajectoryBuilder(oneRingToWobble2.end(), true)
                 .lineToConstantHeading(
-                        new Vector2d(-39, -49.5),
+                        oneRingWobblePickUp,
                         SampleMecanumDrive.getVelocityConstraint(18, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
@@ -264,7 +257,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
                 .splineToConstantHeading(
-                        new Vector2d(-3, -30), Math.toRadians(0)
+                        shootingPosition, Math.toRadians(0)
                 )
                 .addDisplacementMarker(() -> {
                     drive.turn(Math.toRadians(shootCorrection));
@@ -287,7 +280,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
         Trajectory oneRingToPark = drive.trajectoryBuilder(oneRingToB2.end())
                 .lineToConstantHeading(
-                        new Vector2d(9, -35)
+                        park01
                 )
 
                 .build();
@@ -312,7 +305,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
                 .addDisplacementMarker(() ->
                         robot.mtrIntake.setPower(1))
                 .lineToConstantHeading(
-                        new Vector2d(-39, -49.75),
+                        fourRingWobblePickUp,
                         SampleMecanumDrive.getVelocityConstraint(14, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL)
                 )
@@ -340,38 +333,6 @@ public class auto_convert_to_odometry extends LinearOpMode {
         /***
          * here we go code for ring stack and park
          */
-        /*
-        Trajectory fourRingsToShoot1 = drive.trajectoryBuilder(fourRingsToWobble2.end())
-                .addTemporalMarker(1, () ->
-                        robot.mtrWobble.setPower(0//counterWobblePower
-                                )
-                        )
-                .lineToConstantHeading(
-                        new Vector2d(-22, -57)
-                )
-                .addDisplacementMarker(() ->
-                        robot.mtrIntake.setPower(1))
-                .build();
-
-        Trajectory fourRingsToShoot2 = drive.trajectoryBuilder(fourRingsToShoot1.end().plus(new Pose2d (0,0, Math.toRadians(90))))
-                .lineToConstantHeading(
-                        new Vector2d(-22, -38)
-                )
-                .build();
-        Trajectory fourRingsToShoot3 = drive.trajectoryBuilder(fourRingsToShoot2.end().plus(new Pose2d (0,0, Math.toRadians(-90))))
-                .lineTo(
-                        new Vector2d(-3, -42)
-                )
-                .build();
-
-        Trajectory fourRingsToShoot4 = drive.trajectoryBuilder(fourRingsToShoot3.end())
-                .lineTo(
-                        new Vector2d(-3, -30)
-                )
-                .build();
-
-         */
-
 
         Trajectory fourRingsToC2 = drive.trajectoryBuilder(fourRingsToShoot12.end().plus(new Pose2d (0,0, Math.toRadians(-179.9))),true)
                 //then turn around to slap da wobble down umu
@@ -383,7 +344,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
         Trajectory fourRingsToPark = drive.trajectoryBuilder(fourRingsToC2.end())
                 .lineToConstantHeading(
-                        new Vector2d(9, -55)
+                        park4
                 )
 
                 .build();
@@ -401,14 +362,25 @@ public class auto_convert_to_odometry extends LinearOpMode {
         while (!isStopRequested() && opModeIsActive()) {
 
             if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.NONE)) {
+                telemetry.addData("Analysis", pipeline.getAnalysis());
                 telemetry.addLine("Zone A, no rings");
                 telemetry.update();
             } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.ONE)) {
+                telemetry.addData("Analysis", pipeline.getAnalysis());
                 telemetry.addLine("Zone B, one ring");
                 telemetry.update();
             } else if ((pipeline.position == RingStackDeterminationPipeline.RingPosition.FOUR)) {
+                telemetry.addData("Analysis", pipeline.getAnalysis());
                 telemetry.addLine("Zone C, four rings");
                 telemetry.update();
+            }
+
+
+            if(isStopRequested()){
+                if(drive.isBusy()){
+                    drive.cancelFollowing();
+                }
+                currentState = State.STOP;
             }
 
             switch (currentState) {
@@ -615,9 +587,12 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
             }
 
+
             telemetry.addData("Analysis", pipeline.getAnalysis());
             telemetry.addData("Position", pipeline.position);
             telemetry.update();
+
+
         }
     }
 

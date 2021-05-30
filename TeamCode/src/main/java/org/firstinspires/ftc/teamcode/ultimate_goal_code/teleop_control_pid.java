@@ -29,7 +29,7 @@ public class teleop_control_pid extends LinearOpMode {
     ShootState currentState;
 
 
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
+    private static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 
     /***
 
@@ -74,18 +74,7 @@ public class teleop_control_pid extends LinearOpMode {
 
     public void runOpMode() {
         robot.init(hardwareMap);
-
-        //Velocity PID
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-        //PID motor config
-        robot.mtrFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MotorConfigurationType motorConfigurationType = robot.mtrFlywheel.getMotorType().clone();
-        motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
-        robot.mtrFlywheel.setMotorType(motorConfigurationType);
-
-        setPIDFCoefficients(robot.mtrFlywheel, MOTOR_VELO_PID);
+        robot.initShooterPID(hardwareMap);
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
@@ -211,7 +200,7 @@ public class teleop_control_pid extends LinearOpMode {
                     robot.svoRingPush.setPosition(ringPushOut);
                     waitFor(servoMoveTime);
                     robot.svoRingPush.setPosition(ringPushIn);
-                    waitFor(timeBetweenShots);
+                    waitFor(var.timeBetweenShots);
                     currentState = ShootState.ONE_RING_SHOT;
                 case ONE_RING_SHOT:
                     robot.svoRingPush.setPosition(ringPushOut);
