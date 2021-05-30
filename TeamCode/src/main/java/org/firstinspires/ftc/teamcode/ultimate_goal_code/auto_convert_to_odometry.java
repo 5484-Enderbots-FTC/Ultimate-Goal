@@ -758,6 +758,13 @@ public class auto_convert_to_odometry extends LinearOpMode {
         robot.mtrFlywheel.setPower(0);
     }
 
+    private void shootOne() {
+        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
+        waitFor(flywheelRevUpTime+0.1);
+        pushARing();
+        robot.mtrFlywheel.setPower(0);
+    }
+
     private void pickUpWobble(){
         robot.mtrWobble.setPower(wobbleGoalPower);
         waitFor(wobbleTime);
@@ -767,14 +774,6 @@ public class auto_convert_to_odometry extends LinearOpMode {
         robot.mtrWobble.setPower(wobbleDownPower);
         waitFor(1);
     }
-
-    private void shootOne() {
-        robot.mtrFlywheel.setVelocity(normalFlywheelVelocity);
-        waitFor(flywheelRevUpTime+0.1);
-        pushARing();
-        robot.mtrFlywheel.setPower(0);
-    }
-
     private void resetEncoders() {
         robot.mtrFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.mtrFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
