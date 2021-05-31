@@ -5,13 +5,12 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.odometry.drive.SampleMecanumDrive;
@@ -25,11 +24,14 @@ public class auto_odometry_tests extends LinearOpMode {
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
     enum Mode {
-        DRIVER_CONTROL,
-        AUTOMATIC_CONTROL
+        MOVE_SERVO_START,
+        MOVE_SERVO_WAIT,
+        MOVE_AGAIN,
+        MOVE_WAIT,
+        MOVE_BACK
     }
 
-    Mode currentMode = Mode.DRIVER_CONTROL;
+    Mode currentMode = Mode.MOVE_SERVO_START;
 
     double targetShootHeading = Math.toRadians(5);
 
@@ -45,7 +47,6 @@ public class auto_odometry_tests extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
         robot.initShooterPID(hardwareMap);
 
         /***
@@ -64,63 +65,42 @@ public class auto_odometry_tests extends LinearOpMode {
 
             robot.updateDrive(gamepad1.left_stick_y,gamepad1.left_stick_x,gamepad1.right_stick_x,true);
 
-            /*
-            robot.mtrBL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x - gamepad1.right_stick_x));
-            robot.mtrBR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x));
-            robot.mtrFL.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
-            robot.mtrFR.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x));
-
-             */
-
-            switch (currentMode) {
-
-                case DRIVER_CONTROL:
-                    /***
-                     * gotta decide if driver control can live outside of this case or not - i think it can?? since it's constantly updated :P
-                     */
-
-                    if (gamepad1.a) {
-                        drive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                        currentMode = Mode.AUTOMATIC_CONTROL;
+            switch (currentMode){
+                case MOVE_SERVO_START:
+                    if(gamepad1.x){
+                        timer.reset();
+                        robot.svoMagLift.setPosition(var.magUp);
+                        currentMode = Mode.MOVE_SERVO_WAIT;
                     }
-
-                case AUTOMATIC_CONTROL:
-                    drive.setPoseEstimate(againstWall);
-
-                    Trajectory leftShot = drive.trajectoryBuilder(againstWall)
-                            .lineToLinearHeading(targetLeft)
-                            .build();
-                    Trajectory middleShot = drive.trajectoryBuilder(leftShot.end())
-                            .lineToLinearHeading(targetMiddle)
-                            .build();
-                    Trajectory rightShot = drive.trajectoryBuilder(middleShot.end())
-                            .lineToLinearHeading(targetRight)
-                            .build();
-
-                    robot.mtrFlywheel.setVelocity(var.psFlywheelVelocity);
-                    robot.svoMagLift.setPosition(var.magUp);
-                    drive.followTrajectory(leftShot);
-                    pushARing();
-                    drive.followTrajectory(middleShot);
-                    pushARing();
-                    drive.followTrajectory(rightShot);
-                    pushARing();
+                    break;
+                case MOVE_SERVO_WAIT:
+                    if(timer.seconds() > 0.5){
+                        currentMode = Mode.MOVE_AGAIN;
+                    }
+                    break;
+                case MOVE_AGAIN:
+                    robot.svoRingPush.setPosition(var.ringPushOut);
+                    timer.reset();
+                    currentMode = Mode.MOVE_WAIT;
+                    break;
+                case MOVE_WAIT:
+                    if(timer.seconds() > 1){
+                        robot.svoRingPush.setPosition(var.ringPushIn);
+                        currentMode = Mode.MOVE_BACK;
+                    }
+                    break;
+                case MOVE_BACK:
                     robot.svoMagLift.setPosition(var.magDown);
-
-                    robot.svoForkHold.setPosition(var.forkRelease);
-
-                    drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    currentMode = Mode.DRIVER_CONTROL;
+                    currentMode = Mode.MOVE_SERVO_START;
+                    break;
+                default:
+                    currentMode = Mode.MOVE_SERVO_START;
                     break;
 
             }
-
-            if (gamepad1.b && currentMode != Mode.DRIVER_CONTROL) {
-                drive.cancelFollowing();
-                drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                currentMode = Mode.DRIVER_CONTROL;
+            if(gamepad1.b && currentMode != Mode.MOVE_SERVO_START){
+                currentMode = Mode.MOVE_SERVO_START;
             }
-
 
         }
 
@@ -135,12 +115,6 @@ public class auto_odometry_tests extends LinearOpMode {
         timer.reset();
         while (timer.seconds() < waittime) {
         }
-    }
-
-    private void setPIDFCoefficients(DcMotorEx motor, PIDFCoefficients coefficients) {
-        motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(
-                coefficients.p, coefficients.i, coefficients.d, coefficients.f * 12 / robot.batteryVoltageSensor.getVoltage()
-        ));
     }
 }
 
