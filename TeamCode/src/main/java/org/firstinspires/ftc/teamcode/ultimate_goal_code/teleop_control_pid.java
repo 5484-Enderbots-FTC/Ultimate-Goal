@@ -28,8 +28,6 @@ public class teleop_control_pid extends LinearOpMode {
 
     hardwareUltimateGoal robot = new hardwareUltimateGoal();
 
-    ShootState currentState;
-
     /***
 
      ~ Constants ~
@@ -66,13 +64,14 @@ public class teleop_control_pid extends LinearOpMode {
         SVO_MOVE_3
     }
 
+    ShootState currentState = ShootState.NOTHING;
     Mode currentMode = Mode.DRIVER_CONTROL;
 
-    double targetShootHeading = Math.toRadians(5);
+    double targetShootHeading = Math.toRadians(0);
 
-    Pose2d targetLeft = new Pose2d(0, -15, targetShootHeading);
-    Pose2d targetMiddle = new Pose2d(0, -30, targetShootHeading);
-    Pose2d targetRight = new Pose2d(0, -45, targetShootHeading);
+    Pose2d targetLeft = new Pose2d(0, -10, targetShootHeading);
+    Pose2d targetMiddle = new Pose2d(0, -19, targetShootHeading);
+    Pose2d targetRight = new Pose2d(0, -26.5, targetShootHeading);
 
     Pose2d againstWall = new Pose2d(0, 0, 0);
 
@@ -84,8 +83,6 @@ public class teleop_control_pid extends LinearOpMode {
         robot.initShooterPID(hardwareMap);
 
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
-
-        currentState = ShootState.NOTHING;
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -229,9 +226,11 @@ public class teleop_control_pid extends LinearOpMode {
                     }
                     break;
                 case SHOOT_RIGHT:
-                    robot.svoRingPush.setPosition(var.ringPushOut);
-                    svoTimer.reset();
-                    currentMode = Mode.SVO_MOVE_3;
+                    if(svoTimer.seconds() > (var.servoMoveTime+0.2)) {
+                        robot.svoRingPush.setPosition(var.ringPushOut);
+                        svoTimer.reset();
+                        currentMode = Mode.SVO_MOVE_3;
+                    }
                     break;
                 case SVO_MOVE_3:
                     if (svoTimer.seconds() > var.servoMoveTime) {
@@ -250,6 +249,7 @@ public class teleop_control_pid extends LinearOpMode {
             }
             if (gamepad1.right_trigger > 0.1 && currentMode != Mode.DRIVER_CONTROL) {
                 drive.cancelFollowing();
+                drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 robot.mtrFlywheel.setPower(0);
                 currentMode = Mode.DRIVER_CONTROL;
             }
@@ -330,6 +330,7 @@ public class teleop_control_pid extends LinearOpMode {
             }
 
             if (gamepad2.y && currentState != ShootState.NOTHING) {
+                robot.svoRingPush.setPosition(var.ringPushIn);
                 currentState = ShootState.NOTHING;
             }
 
@@ -353,7 +354,7 @@ public class teleop_control_pid extends LinearOpMode {
 
             if (gamepad2.right_trigger > 0.1) {
                 robot.svoRingPush.setPosition(var.ringJamnt);
-                waitFor(0.3);
+                waitFor(0.5);
                 robot.svoRingPush.setPosition(var.ringPushIn);
             }
 
@@ -397,12 +398,6 @@ public class teleop_control_pid extends LinearOpMode {
         }
 
 
-    }
-
-    private void pushARing() {
-        robot.svoRingPush.setPosition(var.ringPushOut);
-        waitFor(var.servoMoveTime);
-        robot.svoRingPush.setPosition(var.ringPushIn);
     }
 
     private void waitFor(double waittime) {

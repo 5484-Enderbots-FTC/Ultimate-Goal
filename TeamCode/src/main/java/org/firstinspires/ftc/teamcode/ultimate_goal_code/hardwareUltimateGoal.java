@@ -19,12 +19,12 @@ public class hardwareUltimateGoal {
 
     //hi welcome to my hardware library for this season that i also made at...the end of the season :}
 
-    DcMotorEx mtrBL, mtrBR, mtrFL, mtrFR, mtrIntake, mtrWobble, mtrFlywheel = null;
-    Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
-    DigitalChannel topLimit;
-    VoltageSensor batteryVoltageSensor;
-    OpenCvCamera webcam;
-    HardwareMap hwMap = null;
+    public DcMotorEx mtrBL, mtrBR, mtrFL, mtrFR, mtrIntake, mtrWobble, mtrFlywheel = null;
+    public Servo svoWobble, svoMagLift, svoRingPush, svoForkHold = null;
+    public DigitalChannel topLimit;
+    public VoltageSensor batteryVoltageSensor;
+    public OpenCvCamera webcam;
+    public HardwareMap hwMap = null;
 
     private static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(100, 0, 30, 18);
 

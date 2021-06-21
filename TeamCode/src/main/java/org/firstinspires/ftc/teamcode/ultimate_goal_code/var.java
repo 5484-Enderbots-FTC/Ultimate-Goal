@@ -10,8 +10,8 @@ public class var {
     public static double magUp = 0.58;
     public static double magDown = 0.85;
 
-    public static double ringPushOut = 0.6;
-    public static double ringPushIn = 0.75;
+    public static double ringPushOut = 0.45;
+    public static double ringPushIn = 0.6;
     public static double ringJamnt = 0.2;
 
     public static double wobbleRelease = 0.3;

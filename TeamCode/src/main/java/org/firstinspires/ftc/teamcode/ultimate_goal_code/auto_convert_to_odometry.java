@@ -36,7 +36,7 @@ public class auto_convert_to_odometry extends LinearOpMode {
     //constants
     private final double ticksPerInchCalibrated = 43.3305;
 
-    double shootCorrection = 5;
+    double shootCorrection = 6;
     double shootAngleCorrection = 8;
 
     double flywheelRevUpTime = 0.85;
@@ -79,8 +79,8 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
         robot.init(hardwareMap);
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
         robot.initShooterPID(hardwareMap);
         robot.initWebcam(hardwareMap);
         
@@ -422,7 +422,19 @@ public class auto_convert_to_odometry extends LinearOpMode {
 
                         //shoot
                         robot.svoMagLift.setPosition(var.magUp);
-                        shootThree();
+
+                        //shoot 3
+                        robot.mtrFlywheel.setVelocity(var.normalFlywheelVelocity);
+                        waitFor(flywheelRevUpTime+0.1);
+                        pushARing();
+                        waitFor(var.timeBetweenShots+0.1);
+                        pushARing();
+                        waitFor(var.timeBetweenShots+0.1);
+                        pushARing();
+                        waitFor(var.timeBetweenShots);
+                        robot.mtrFlywheel.setPower(0);
+
+
                         robot.svoMagLift.setPosition(var.magDown);
 
                         //undo correction
